@@ -15,12 +15,24 @@
     }
 
     .header-nav {
-        margin-left: var(--sp-3);
+        display: none;
     }
 
-    .nav-dropdown-toggle {
-        font-size: 12px;
-        padding: var(--sp-1) var(--sp-2);
+    .header-controls {
+        display: none;
+    }
+
+    .hamburger-btn {
+        display: flex;
+    }
+
+    .mobile-menu-overlay {
+        display: block;
+    }
+
+    .mobile-menu {
+        display: flex;
+        padding-top: 52px;
     }
 
     .main-content {
@@ -54,8 +66,8 @@
         display: none;
     }
 
-    .header-nav {
-        margin-left: 0;
+    .mobile-menu {
+        padding-top: 48px;
     }
 
     .user-avatar,
