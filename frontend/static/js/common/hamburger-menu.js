@@ -79,10 +79,29 @@
         if (menu.classList.contains("open")) position();
     }, { passive: true });
 
-    // Highlight active page
+    // Highlight active page (quicklinks + header nav)
     const path = window.location.pathname.replace(/\/+$/, "") || "/";
+
     menu.querySelectorAll(".header-quicklinks__link").forEach((link) => {
         const href = link.getAttribute("href").replace(/\/+$/, "") || "/";
         if (href === path) link.classList.add("header-quicklinks__link--active");
+    });
+
+    const homeBtn = document.querySelector(".nav-home-btn");
+    if (homeBtn) {
+        const href = homeBtn.getAttribute("href").replace(/\/+$/, "") || "/";
+        if (href === path) homeBtn.classList.add("nav-home-btn--active");
+    }
+
+    document.querySelectorAll(".nav-dropdown-toggle").forEach((toggle) => {
+        const href = toggle.getAttribute("href").replace(/\/+$/, "") || "/";
+        if (path === href || path.startsWith(href + "/")) {
+            toggle.classList.add("nav-dropdown-toggle--active");
+        }
+    });
+
+    document.querySelectorAll(".nav-dropdown-item").forEach((item) => {
+        const href = item.getAttribute("href").replace(/\/+$/, "") || "/";
+        if (href === path) item.classList.add("nav-dropdown-item--active");
     });
 })();

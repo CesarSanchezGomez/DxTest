@@ -87,6 +87,22 @@
     background: rgba(183, 196, 11, 0.1);
 }
 
+.nav-home-btn--active {
+    color: var(--text-inverse);
+    position: relative;
+}
+
+.nav-home-btn--active::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: var(--sp-2);
+    right: var(--sp-2);
+    height: 2px;
+    background: var(--brand);
+    border-radius: 1px 1px 0 0;
+}
+
 .nav-dropdown {
     position: relative;
     display: flex;
@@ -108,6 +124,22 @@
 .nav-dropdown-toggle:hover {
     color: var(--text-inverse);
     background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-dropdown-toggle--active {
+    color: var(--text-inverse);
+    position: relative;
+}
+
+.nav-dropdown-toggle--active::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: var(--sp-2);
+    right: var(--sp-2);
+    height: 2px;
+    background: var(--brand);
+    border-radius: 1px 1px 0 0;
 }
 
 .nav-chevron {
@@ -154,6 +186,11 @@
 .nav-dropdown-item:hover {
     background: rgba(183, 196, 11, 0.1);
     color: var(--brand);
+}
+
+.nav-dropdown-item--active {
+    color: var(--brand);
+    background: rgba(183, 196, 11, 0.08);
 }
 
 /* --- Controls --- */
