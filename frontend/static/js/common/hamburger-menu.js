@@ -2,6 +2,8 @@
     const btn = document.getElementById("hamburger-btn");
     const menu = document.getElementById("header-quicklinks");
     if (!btn || !menu) return;
+    if (btn.dataset.init) return;
+    btn.dataset.init = "1";
 
     const BP = 768;
 
@@ -50,7 +52,7 @@
     }
 
     btn.addEventListener("click", (e) => {
-        e.stopPropagation();
+        e.stopImmediatePropagation();
         menu.classList.contains("open") ? close() : open();
     });
 
