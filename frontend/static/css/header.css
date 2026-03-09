@@ -124,8 +124,8 @@
     top: 100%;
     left: 0;
     min-width: 160px;
-    background: var(--surface-0);
-    border: 1px solid var(--surface-3);
+    background: var(--header-bg);
+    border: 1px solid var(--header-border);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
     padding: var(--sp-1) 0;
@@ -145,15 +145,15 @@
 .nav-dropdown-item {
     display: block;
     padding: var(--sp-2) var(--sp-4);
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.7);
     font-size: 13px;
     font-weight: 500;
     transition: all var(--duration) var(--ease-out);
 }
 
 .nav-dropdown-item:hover {
-    background: var(--surface-1);
-    color: var(--text-primary);
+    background: rgba(183, 196, 11, 0.1);
+    color: var(--brand);
 }
 
 /* --- Controls --- */
@@ -295,6 +295,11 @@
 }
 
 .header-quicklinks__link:hover {
+    color: var(--brand);
+    background: rgba(183, 196, 11, 0.1);
+}
+
+.header-quicklinks__link--active {
     color: var(--brand);
     background: rgba(183, 196, 11, 0.1);
 }

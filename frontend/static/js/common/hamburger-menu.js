@@ -76,4 +76,11 @@
     window.addEventListener("scroll", () => {
         if (menu.classList.contains("open")) position();
     }, { passive: true });
+
+    // Highlight active page
+    const path = window.location.pathname.replace(/\/+$/, "") || "/";
+    menu.querySelectorAll(".header-quicklinks__link").forEach((link) => {
+        const href = link.getAttribute("href").replace(/\/+$/, "") || "/";
+        if (href === path) link.classList.add("header-quicklinks__link--active");
+    });
 })();
