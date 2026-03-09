@@ -26,13 +26,8 @@
         display: flex;
     }
 
-    .mobile-menu-overlay {
-        display: block;
-    }
-
-    .mobile-menu {
+    .header-quicklinks {
         display: flex;
-        padding-top: 52px;
     }
 
     .main-content {
@@ -64,10 +59,6 @@
 
     .header-text {
         display: none;
-    }
-
-    .mobile-menu {
-        padding-top: 48px;
     }
 
     .user-avatar,

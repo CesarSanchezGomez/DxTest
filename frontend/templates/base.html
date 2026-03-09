@@ -80,39 +80,24 @@
     </div>
 </header>
 
-<div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
-<div class="mobile-menu" id="mobile-menu">
-    <nav class="mobile-menu-nav">
-        <a href="/" class="mobile-menu-link">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-            Inicio
-        </a>
-        {% for sol in get_solutions() %}
-        <div class="mobile-menu-dropdown">
-            <a href="/{{ sol.slug }}/" class="mobile-menu-link">
-                {{ sol.name }}
-                {% if sol.pages %}
-                <svg class="mobile-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                {% endif %}
-            </a>
-            {% if sol.pages %}
-            <div class="mobile-submenu">
-                {% for page in sol.pages %}
-                <a href="/{{ sol.slug }}/{{ page.path }}" class="mobile-submenu-link">{{ page.name }}</a>
-                {% endfor %}
-            </div>
-            {% endif %}
-        </div>
-        {% endfor %}
-    </nav>
-    <div class="mobile-menu-footer">
-        <a href="/auth/logout" class="mobile-logout-btn">Cerrar sesion</a>
-    </div>
-</div>
+<nav class="header-quicklinks" id="header-quicklinks">
+    <a href="/" class="header-quicklinks__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        Inicio
+    </a>
+    {% for sol in get_solutions() %}
+    <a href="/{{ sol.slug }}/" class="header-quicklinks__link">{{ sol.name }}</a>
+    {% if sol.pages %}
+    {% for page in sol.pages %}
+    <a href="/{{ sol.slug }}/{{ page.path }}" class="header-quicklinks__link header-quicklinks__link--sub">{{ page.name }}</a>
+    {% endfor %}
+    {% endif %}
+    {% endfor %}
+    <div class="header-quicklinks__divider"></div>
+    <a href="/auth/logout" class="header-quicklinks__link header-quicklinks__link--logout">Cerrar sesion</a>
+</nav>
 
 <main class="main-content">
     <div class="content-wrapper">
@@ -128,49 +113,7 @@
 
 <script src="/static/js/common/user-info.js"></script>
 <script src="/static/js/common/auth-session-guard.js"></script>
-
-<script>
-(function() {
-    const hamburgerBtn = document.getElementById('hamburger-btn');
-    const mobileMenu = document.getElementById('mobile-menu');
-    const overlay = document.getElementById('mobile-menu-overlay');
-
-    function toggleMenu() {
-        const isOpen = mobileMenu.classList.toggle('active');
-        hamburgerBtn.classList.toggle('active');
-        overlay.classList.toggle('active');
-        hamburgerBtn.setAttribute('aria-expanded', isOpen);
-        document.body.style.overflow = isOpen ? 'hidden' : '';
-    }
-
-    function closeMenu() {
-        mobileMenu.classList.remove('active');
-        hamburgerBtn.classList.remove('active');
-        overlay.classList.remove('active');
-        hamburgerBtn.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
-    }
-
-    hamburgerBtn.addEventListener('click', toggleMenu);
-    overlay.addEventListener('click', closeMenu);
-
-    document.querySelectorAll('.mobile-menu-dropdown').forEach(function(dropdown) {
-        var link = dropdown.querySelector('.mobile-menu-link');
-        var submenu = dropdown.querySelector('.mobile-submenu');
-        if (submenu) {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                dropdown.classList.toggle('open');
-            });
-        }
-    });
-
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 768) closeMenu();
-    });
-})();
-</script>
-
+<script src="/static/js/common/hamburger-menu.js"></script>
 {% block extra_js %}{% endblock %}
 
 </body>
