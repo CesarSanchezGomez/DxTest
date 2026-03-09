@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}DxTools - Solutions Hub{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/hub.css">
+{% endblock %}
+
+{% block content %}
+    <div class="hub-welcome">
+        <h2 class="page-title">Solutions Hub</h2>
+        <p class="page-description">Selecciona una solucion para comenzar</p>
+    </div>
+
+    {% if solutions %}
+    <div class="cards-grid">
+        {% for sol in solutions %}
+        <div class="card">
+            <div class="card-header"><h3>{{ sol.name }}</h3></div>
+            <div class="card-body">
+                <p>{{ sol.description }}</p>
+                <div class="card-actions">
+                    <a href="/{{ sol.slug }}/" class="btn btn-primary">Abrir {{ sol.name }}</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">&#9881;</div>
+        <h3>No hay soluciones disponibles</h3>
+        <p>Las soluciones se registraran proximamente.</p>
+    </div>
+    {% endif %}
+{% endblock %}

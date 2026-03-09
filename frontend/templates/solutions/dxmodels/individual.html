@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} - DxModels{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+<link rel="stylesheet" href="/static/css/solutions/dxmodels/forms.css">
+<link rel="stylesheet" href="/static/css/solutions/dxmodels/modals.css">
+<link rel="stylesheet" href="/static/css/solutions/dxmodels/editors.css">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-title">{{ title }}</h2>
+</div>
+
+<div class="form-container">
+    <form id="procesamiento-form" class="form-main">
+        <div class="form-header"><h3>Configuracion</h3></div>
+
+        <div class="form-content form-grid-2col">
+            <div class="form-group">
+                <label for="xml-file">Archivo XML</label>
+                <input type="file" id="xml-file" accept=".xml,text/xml,application/xml" class="file-input">
+                <label for="xml-file" class="file-label">
+                    Seleccionar archivo XML
+                    <span class="file-name" id="file-name">Ningun archivo seleccionado</span>
+                </label>
+            </div>
+
+            <div class="form-group form-group-stack">
+                <label>Filtros</label>
+                <div class="selection-summary">
+                    {% if require_countries %}
+                    <div class="summary-item">
+                        <button type="button" id="btn-select-paises" class="btn btn-secondary">Elegir Paises</button>
+                        <span id="paises-count" class="badge">0 seleccionados</span>
+                    </div>
+                    {% endif %}
+                    <div class="summary-item">
+                        <button type="button" id="btn-select-idiomas" class="btn btn-secondary">Elegir Idiomas</button>
+                        <span id="idiomas-count" class="badge">0 seleccionados</span>
+                    </div>
+                </div>
+                <div class="form-inline-actions">
+                    <button type="button" id="btn-limpiar" class="btn btn-secondary">Limpiar</button>
+                    <button type="button" id="btn-procesar" class="btn btn-primary">Depurar XML</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="editor-section" id="editor-section" style="display: none;">
+    <div class="editor-grid">
+        <div class="editor-panel">
+            <div class="editor-header">
+                <h4>XML Original</h4>
+                <button type="button" id="btn-copy-input" class="btn-icon" title="Copiar">Copiar</button>
+            </div>
+            <div class="code-editor"><textarea id="xml-input" readonly></textarea></div>
+        </div>
+        <div class="editor-panel">
+            <div class="editor-header">
+                <h4>XML Depurado</h4>
+                <div class="editor-actions">
+                    <button type="button" id="btn-copy-output" class="btn-icon" title="Copiar">Copiar</button>
+                    <button type="button" id="btn-download" class="btn-icon" title="Descargar">Descargar</button>
+                </div>
+            </div>
+            <div class="code-editor"><textarea id="xml-output" readonly></textarea></div>
+        </div>
+    </div>
+</div>
+
+<div class="loader" id="loader" style="display: none;">
+    <div class="spinner"></div>
+    <p>Procesando XML...</p>
+</div>
+
+<div id="modal-selector" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modal-title"></h3>
+            <button type="button" class="modal-close" id="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="text" id="modal-search" class="search-input" placeholder="Buscar...">
+            <div id="modal-options" class="checkbox-group"></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" id="modal-cancel" class="btn btn-secondary">Cancelar</button>
+            <button type="button" id="modal-confirm" class="btn btn-primary">Confirmar</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="/static/js/solutions/dxmodels/app.js"></script>
+<script>
+    const dataModel = "{{ data_model }}";
+    const requireCountries = {{ "true" if require_countries else "false" }};
+</script>
+<script src="/static/js/solutions/dxmodels/individual.js"></script>
+{% endblock %}

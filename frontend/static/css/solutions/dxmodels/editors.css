@@ -1,0 +1,116 @@
+/* CodeMirror editor panels */
+
+.editor-section {
+    margin-top: var(--sp-6);
+}
+
+.editor-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--sp-4);
+}
+
+.editor-panel {
+    background: var(--surface-0);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--surface-2);
+    overflow: hidden;
+}
+
+.editor-header {
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--header-bg);
+    border-bottom: 2px solid var(--brand);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.editor-header h4 {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-inverse);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+.editor-actions {
+    display: flex;
+    gap: var(--sp-2);
+}
+
+.btn-icon {
+    background: transparent;
+    border: 1px solid var(--surface-3, #555);
+    color: var(--text-inverse, #fff);
+    padding: 4px 10px;
+    border-radius: var(--radius-sm, 4px);
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--brand, #7c3aed);
+}
+
+.code-editor {
+    height: 480px;
+    position: relative;
+    overflow: hidden;
+}
+
+.code-editor textarea {
+    display: none;
+}
+
+.CodeMirror {
+    height: 100% !important;
+    width: 100% !important;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    border: none;
+}
+
+.CodeMirror-vscrollbar::-webkit-scrollbar,
+.CodeMirror-hscrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.CodeMirror-vscrollbar::-webkit-scrollbar-track,
+.CodeMirror-hscrollbar::-webkit-scrollbar-track {
+    background: #272822;
+}
+
+.CodeMirror-vscrollbar::-webkit-scrollbar-thumb,
+.CodeMirror-hscrollbar::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 3px;
+}
+
+.CodeMirror-linenumber {
+    color: #75715e;
+    padding: 0 8px 0 5px;
+    min-width: 36px;
+}
+
+.CodeMirror-gutters {
+    background-color: #272822;
+    border-right: 1px solid #3c3c3c;
+}
+
+.CodeMirror-activeline-background {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.CodeMirror-selected {
+    background: rgba(183, 196, 11, 0.2) !important;
+}
+
+.CodeMirror-cursor {
+    border-left: 2px solid #f8f8f0 !important;
+}

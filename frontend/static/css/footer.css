@@ -1,0 +1,16 @@
+/* Footer */
+
+.footer {
+    text-align: center;
+    padding: var(--sp-5) var(--sp-6);
+    color: var(--text-tertiary);
+    font-size: 12px;
+    border-top: 1px solid var(--surface-3);
+    background: var(--surface-0);
+    letter-spacing: 0.2px;
+}
+
+.footer b {
+    font-weight: 600;
+    color: var(--text-secondary);
+}

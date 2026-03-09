@@ -1,0 +1,70 @@
+/* Cards */
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--sp-4);
+}
+
+.card {
+    background: var(--surface-0);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--surface-2);
+    overflow: hidden;
+    transition: all 0.3s var(--ease-out);
+    display: flex;
+    flex-direction: column;
+}
+
+.card:hover {
+    border-color: var(--brand);
+    box-shadow: var(--shadow-md), 0 0 0 1px var(--brand-glow);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    padding: var(--sp-4) var(--sp-5);
+    background: var(--header-bg);
+    border-bottom: 2px solid var(--brand);
+}
+
+.card-header h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-inverse);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin: 0;
+}
+
+.card-body {
+    padding: var(--sp-6);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-body p {
+    margin-bottom: var(--sp-3);
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.card-body p:last-of-type {
+    margin-bottom: var(--sp-6);
+}
+
+.card-actions {
+    margin-top: auto;
+}
+
+/* Solution card icon */
+
+.card-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: var(--sp-4);
+    border-radius: var(--radius-sm);
+    object-fit: contain;
+}

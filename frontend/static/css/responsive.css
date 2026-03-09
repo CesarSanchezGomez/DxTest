@@ -1,0 +1,95 @@
+/* All responsive breakpoints */
+
+@media (max-width: 768px) {
+    .header {
+        padding: 0 var(--sp-4);
+    }
+
+    .header-top {
+        height: 52px;
+        gap: var(--sp-3);
+    }
+
+    .logo-img {
+        height: 34px;
+    }
+
+    .header-nav {
+        margin-left: var(--sp-3);
+    }
+
+    .nav-dropdown-toggle {
+        font-size: 12px;
+        padding: var(--sp-1) var(--sp-2);
+    }
+
+    .main-content {
+        padding: var(--sp-6) var(--sp-4);
+    }
+
+    .cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hub-welcome .page-title {
+        font-size: 22px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        padding: 0 var(--sp-3);
+    }
+
+    .header-top {
+        height: 48px;
+        gap: var(--sp-2);
+    }
+
+    .logo-img {
+        height: 30px;
+    }
+
+    .header-text {
+        display: none;
+    }
+
+    .header-nav {
+        margin-left: 0;
+    }
+
+    .user-avatar,
+    .user-avatar-initials {
+        width: 28px;
+        height: 28px;
+        font-size: 11px;
+    }
+
+    .logout-btn {
+        padding: var(--sp-1) var(--sp-2);
+        font-size: 11px;
+    }
+
+    .main-content {
+        padding: var(--sp-5) var(--sp-3);
+    }
+
+    .page-title {
+        font-size: 18px;
+    }
+
+    .footer {
+        padding: var(--sp-4);
+        font-size: 11px;
+    }
+
+    #toast-container {
+        left: var(--sp-3);
+        right: var(--sp-3);
+    }
+
+    .toast {
+        min-width: 0;
+        width: 100%;
+    }
+}

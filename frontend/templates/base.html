@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DxTools - Solutions Hub{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/layout.css">
+    <link rel="stylesheet" href="/static/css/header.css">
+    <link rel="stylesheet" href="/static/css/footer.css">
+    <link rel="stylesheet" href="/static/css/buttons.css">
+    <link rel="stylesheet" href="/static/css/cards.css">
+    <link rel="stylesheet" href="/static/css/utilities.css">
+    <link rel="stylesheet" href="/static/css/responsive.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<header class="header">
+    <div class="header-content">
+        <div class="header-top">
+            <div class="header-left">
+                <a href="/" class="logo-link">
+                    <img src="/static/images/logo-dxgrow-inverted-300x180.png" alt="Dxgrow" class="logo-img">
+                </a>
+            </div>
+
+            <div class="header-text">
+                <h1 class="logo">DxTools</h1>
+                <p class="subtitle">Solutions Hub</p>
+            </div>
+
+            <nav class="header-nav">
+                <a href="/" class="nav-home-btn" title="Inicio">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    Inicio
+                </a>
+                {% for sol in get_solutions() %}
+                <div class="nav-dropdown">
+                    <a href="/{{ sol.slug }}/" class="nav-dropdown-toggle">
+                        {{ sol.name }}
+                        {% if sol.pages %}
+                        <svg class="nav-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        {% endif %}
+                    </a>
+                    {% if sol.pages %}
+                    <div class="nav-dropdown-menu">
+                        {% for page in sol.pages %}
+                        <a href="/{{ sol.slug }}/{{ page.path }}" class="nav-dropdown-item">{{ page.name }}</a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </nav>
+
+            <div class="header-controls">
+                <div class="user-menu">
+                    <img class="user-avatar" id="user-avatar"
+                         src="/static/images/logo-dxgrow-300x180.png" title="" alt="User avatar">
+                    <a href="/auth/logout" class="logout-btn">Cerrar sesion</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="content-wrapper">
+        {% block content %}{% endblock %}
+    </div>
+</main>
+
+<footer class="footer">
+    <p><b>&copy; 2026 Dxgrow. Todos los derechos reservados. | DxTools v1.0</b></p>
+</footer>
+
+<div id="toast-container"></div>
+
+<script src="/static/js/common/user-info.js"></script>
+<script src="/static/js/common/auth-session-guard.js"></script>
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

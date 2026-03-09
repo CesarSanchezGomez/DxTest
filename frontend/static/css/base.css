@@ -1,0 +1,107 @@
+/* Reset, variables, typography */
+
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    min-width: 0;
+    word-break: break-word;
+}
+
+:root {
+    --brand: #b7c40b;
+    --brand-dark: #9aa909;
+    --brand-glow: rgba(183, 196, 11, 0.15);
+
+    --success: #82C016;
+    --error: #f45a4a;
+
+    --surface-0: #ffffff;
+    --surface-1: #f6f7f8;
+    --surface-2: #eceef0;
+    --surface-3: #dfe1e4;
+
+    --text-primary: #1a1a1b;
+    --text-secondary: #5f6368;
+    --text-tertiary: #8c9196;
+    --text-inverse: #ffffff;
+
+    --header-bg: #1e1e1f;
+    --header-border: rgba(255, 255, 255, 0.06);
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+    --shadow-brand: 0 4px 14px rgba(183, 196, 11, 0.25);
+
+    --sp-1: 4px;
+    --sp-2: 8px;
+    --sp-3: 12px;
+    --sp-4: 16px;
+    --sp-5: 20px;
+    --sp-6: 24px;
+    --sp-8: 32px;
+    --sp-10: 40px;
+    --sp-12: 48px;
+    --sp-16: 64px;
+
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --duration: 0.2s;
+
+    --max-width: 1120px;
+}
+
+html,
+body {
+    height: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+}
+
+body {
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    background: var(--surface-1);
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    overflow-y: auto;
+    width: 100%;
+    scrollbar-width: none;
+}
+
+body::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+a {
+    color: var(--brand-dark);
+    text-decoration: none;
+    transition: color var(--duration) var(--ease-out);
+}
+
+a:hover {
+    color: var(--brand);
+}
+
+::selection {
+    background: var(--brand);
+    color: var(--text-inverse);
+}

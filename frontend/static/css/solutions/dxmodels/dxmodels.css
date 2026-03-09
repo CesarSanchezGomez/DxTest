@@ -1,0 +1,5 @@
+/* DxModels solution – solution-specific styles */
+
+.cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+}

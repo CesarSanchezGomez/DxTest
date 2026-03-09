@@ -1,0 +1,72 @@
+/* Links used as buttons */
+
+a.btn {
+    text-decoration: none;
+}
+
+
+/* Buttons */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    padding: var(--sp-3) var(--sp-5);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--duration) var(--ease-out);
+    line-height: 1.4;
+}
+
+/* Primary button */
+
+.btn-primary {
+    background: var(--brand);
+    color: var(--text-inverse);
+}
+
+.btn-primary:hover {
+    background: var(--brand-dark);
+    color: var(--text-inverse);
+    box-shadow: var(--shadow-brand);
+    transform: translateY(-1px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Secondary button */
+
+.btn-secondary {
+    background: var(--surface-2);
+    color: var(--text-secondary);
+}
+
+.btn-secondary:hover {
+    background: var(--surface-3);
+    color: var(--text-primary);
+}
+
+/* Featured button */
+
+.btn-featured {
+    background: var(--brand);
+    color: var(--text-inverse);
+    padding: var(--sp-4) var(--sp-8);
+    font-size: 14px;
+    border-radius: var(--radius-md);
+}
+
+.btn-featured:hover {
+    background: var(--brand-dark);
+    color: var(--text-inverse);
+    box-shadow: var(--shadow-brand);
+    transform: translateY(-1px);
+}

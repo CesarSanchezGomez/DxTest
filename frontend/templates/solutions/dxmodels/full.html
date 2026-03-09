@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Data Model Completo - DxModels{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/solutions/dxmodels/forms.css">
+<link rel="stylesheet" href="/static/css/solutions/dxmodels/modals.css">
+{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h2 class="page-title">Data Model Completo</h2>
+    </div>
+
+    <div class="form-container">
+        <div class="form-header"><h3>Archivos XML</h3></div>
+        <div class="form-content">
+            <div class="form-group">
+                <label>Cargar modelos</label>
+                <div class="files-grid">
+                    <div class="file-card">
+                        <h4>CDM</h4>
+                        <input type="file" id="file-cdm" accept=".xml,text/xml,application/xml" class="file-input">
+                        <label for="file-cdm" class="file-label">Seleccionar</label>
+                        <span class="file-status" id="status-cdm">No cargado</span>
+                    </div>
+                    <div class="file-card">
+                        <h4>CSF CDM</h4>
+                        <input type="file" id="file-csf-cdm" accept=".xml,text/xml,application/xml" class="file-input">
+                        <label for="file-csf-cdm" class="file-label">Seleccionar</label>
+                        <span class="file-status" id="status-csf-cdm">No cargado</span>
+                    </div>
+                    <div class="file-card">
+                        <h4>SDM</h4>
+                        <input type="file" id="file-sdm" accept=".xml,text/xml,application/xml" class="file-input">
+                        <label for="file-sdm" class="file-label">Seleccionar</label>
+                        <span class="file-status" id="status-sdm">No cargado</span>
+                    </div>
+                    <div class="file-card">
+                        <h4>CSF SDM</h4>
+                        <input type="file" id="file-csf-sdm" accept=".xml,text/xml,application/xml" class="file-input">
+                        <label for="file-csf-sdm" class="file-label">Seleccionar</label>
+                        <span class="file-status" id="status-csf-sdm">No cargado</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions-row">
+                <div class="form-actions-filters">
+                    <label>Filtros</label>
+                    <div class="selection-summary">
+                        <div class="summary-item">
+                            <button type="button" id="btn-select-paises" class="btn btn-secondary">Elegir Paises (CSF)</button>
+                            <span id="paises-count" class="badge">0 seleccionados</span>
+                        </div>
+                        <div class="summary-item">
+                            <button type="button" id="btn-select-idiomas" class="btn btn-secondary">Elegir Idiomas</button>
+                            <span id="idiomas-count" class="badge">0 seleccionados</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions-buttons">
+                    <button type="button" id="btn-limpiar-completo" class="btn btn-secondary">Limpiar Todo</button>
+                    <button type="button" id="btn-procesar-completo" class="btn btn-primary">Depurar los 4 Modelos</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="log-section">
+        <h4>Log</h4>
+        <div id="log-output" class="log-output"></div>
+    </div>
+
+    <div class="loader" id="loader" style="display: none;">
+        <div class="spinner"></div><p>Procesando los 4 modelos...</p>
+    </div>
+
+    <div id="modal-selector" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Seleccionar</h3>
+                <button type="button" class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="modal-search" placeholder="Buscar..." class="search-input">
+                <div id="modal-options" class="checkbox-group"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="modal-cancel" class="btn btn-secondary">Cancelar</button>
+                <button type="button" id="modal-confirm" class="btn btn-primary">Confirmar</button>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/solutions/dxmodels/app.js"></script>
+<script src="/static/js/solutions/dxmodels/full.js"></script>
+{% endblock %}
