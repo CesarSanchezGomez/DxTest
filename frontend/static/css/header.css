@@ -98,7 +98,7 @@
     bottom: 0;
     left: var(--sp-2);
     right: var(--sp-2);
-    height: 2px;
+    height: 4px;
     background: var(--brand);
     border-radius: 1px 1px 0 0;
 }
@@ -137,7 +137,7 @@
     bottom: 0;
     left: var(--sp-2);
     right: var(--sp-2);
-    height: 2px;
+    height: 4px;
     background: var(--brand);
     border-radius: 1px 1px 0 0;
 }
@@ -157,7 +157,7 @@
     left: 0;
     min-width: 160px;
     background: var(--header-bg);
-    border: 1px solid var(--header-border);
+    border: 4px solid var(--header-border);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
     padding: var(--sp-1) 0;
