@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
-    const API_BASE = '/api/dx-sentinel';
+    const API_BASE = '/api/dxsentinel';
 
     const uploadForm = document.getElementById('uploadForm');
     const statusDiv = document.getElementById('status');

@@ -3,9 +3,11 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from backend.core.auth.dependencies import get_current_user
+from backend.hub.registry import get_solutions
 
-router = APIRouter(prefix="/dx-sentinel", tags=["dx-sentinel"])
+router = APIRouter(prefix="/dxsentinel", tags=["dxsentinel"])
 templates = Jinja2Templates(directory="frontend/templates")
+templates.env.globals["get_solutions"] = get_solutions
 
 
 @router.get("/", response_class=HTMLResponse)

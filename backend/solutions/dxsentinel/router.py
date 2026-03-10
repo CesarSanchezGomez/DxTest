@@ -5,7 +5,7 @@ from backend.core.auth.dependencies import get_current_user
 from .models import UploadResponse, LanguagesResponse, CountriesResponse, ProcessRequest, ProcessResponse
 from .services import FileService, ProcessingService, MAX_UPLOAD_SIZE
 
-router = APIRouter(prefix="/api/dx-sentinel", tags=["dx-sentinel"])
+router = APIRouter(prefix="/api/dxsentinel", tags=["dxsentinel"])
 
 
 @router.post("/upload", response_model=UploadResponse)
