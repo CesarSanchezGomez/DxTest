@@ -10,6 +10,9 @@ from backend.core.middleware.auth_guard import auth_guard
 from backend.hub.router import router as hub_router
 from backend.solutions.dxmodels.views import router as dxmodels_views
 from backend.solutions.dxmodels.router import router as dxmodels_api
+import backend.solutions.dxsentinel  # noqa: F401 — triggers register_solution
+from backend.solutions.dxsentinel.views import router as dxsentinel_views
+from backend.solutions.dxsentinel.router import router as dxsentinel_api
 
 settings = get_settings()
 
@@ -23,6 +26,8 @@ app.include_router(auth_router)
 app.include_router(hub_router)
 app.include_router(dxmodels_views)
 app.include_router(dxmodels_api)
+app.include_router(dxsentinel_views)
+app.include_router(dxsentinel_api)
 
 
 @app.get("/favicon.ico", include_in_schema=False)
