@@ -1,41 +1,58 @@
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
-    const API_BASE = '/api/dxsentinel';
+    var NON_EXCLUDABLE_ENTITY = 'personInfo';
 
-    const uploadForm = document.getElementById('uploadForm');
-    const statusDiv = document.getElementById('status');
-    const resultCard = document.getElementById('resultCard');
-    const resultInfo = document.getElementById('resultInfo');
-    const countryModal = document.getElementById('countryModal');
-    const openModalBtn = document.getElementById('openCountryModal');
-    const closeModalBtn = document.getElementById('closeCountryModal');
-    const cancelModalBtn = document.getElementById('cancelCountrySelection');
-    const confirmModalBtn = document.getElementById('confirmCountrySelection');
-    const countryCheckboxesDiv = document.getElementById('countryCheckboxes');
-    const selectAllBtn = document.getElementById('selectAllCountries');
-    const deselectAllBtn = document.getElementById('deselectAllCountries');
-    const selectedCountLabel = document.getElementById('selectedCountriesCount');
-    const selectedPreview = document.getElementById('selectedCountriesPreview');
-    const countrySearch = document.getElementById('countrySearch');
-    const languageSelect = document.getElementById('languageCode');
-    const languageHelper = document.getElementById('languageHelper');
+    var API_BASE = '/api/dxsentinel';
 
-    let csfFileId = null;
-    let uploadedMainFileId = null;
-    let selectedCountries = [];
-    let selectedLanguage = 'en-US';
+    var uploadForm = document.getElementById('uploadForm');
+    var statusDiv = document.getElementById('status');
+    var resultCard = document.getElementById('resultCard');
+    var resultInfo = document.getElementById('resultInfo');
+    var countryModal = document.getElementById('countryModal');
+    var openCountryModalBtn = document.getElementById('openCountryModal');
+    var closeCountryModalBtn = document.getElementById('closeCountryModal');
+    var cancelCountryBtn = document.getElementById('cancelCountrySelection');
+    var confirmCountryBtn = document.getElementById('confirmCountrySelection');
+    var countryCheckboxesDiv = document.getElementById('countryCheckboxes');
+    var selectAllCountriesBtn = document.getElementById('selectAllCountries');
+    var deselectAllCountriesBtn = document.getElementById('deselectAllCountries');
+    var selectedCountriesCountLabel = document.getElementById('selectedCountriesCount');
+    var selectedCountriesPreview = document.getElementById('selectedCountriesPreview');
+    var countrySearch = document.getElementById('countrySearch');
+    var languageSelect = document.getElementById('languageCode');
+    var languageHelper = document.getElementById('languageHelper');
 
-    const XML_VALIDATORS = {
-        sdm: (c) => c.includes('<succession-data-model'),
-        csf_sdm: (c) => c.includes('<country-specific-fields') && c.includes('<format-group')
+    var entityModal = document.getElementById('entityModal');
+    var openEntityModalBtn = document.getElementById('openEntityModal');
+    var closeEntityModalBtn = document.getElementById('closeEntityModal');
+    var cancelEntityBtn = document.getElementById('cancelEntitySelection');
+    var confirmEntityBtn = document.getElementById('confirmEntitySelection');
+    var entityCheckboxesDiv = document.getElementById('entityCheckboxes');
+    var selectAllEntitiesBtn = document.getElementById('selectAllEntities');
+    var deselectAllEntitiesBtn = document.getElementById('deselectAllEntities');
+    var selectedEntitiesCountLabel = document.getElementById('selectedEntitiesCount');
+    var selectedEntitiesPreview = document.getElementById('selectedEntitiesPreview');
+    var entitySearch = document.getElementById('entitySearch');
+    var entityHelper = document.getElementById('entityHelper');
+
+    var csfFileId = null;
+    var uploadedMainFileId = null;
+    var selectedCountries = [];
+    var selectedLanguage = 'en-US';
+    var availableEntities = [];
+    var excludedEntities = [];
+
+    var XML_VALIDATORS = {
+        sdm: function (c) { return c.includes('<succession-data-model'); },
+        csf_sdm: function (c) { return c.includes('<country-specific-fields') && c.includes('<format-group'); }
     };
 
     // ─── Utilidades ─────────────────────────────────────────────────────
 
     function showToast(message, type) {
-        const container = document.getElementById('toast-container') || createToastContainer();
-        const toast = document.createElement('div');
+        var container = document.getElementById('toast-container') || createToastContainer();
+        var toast = document.createElement('div');
         toast.className = 'toast ' + (type || 'success');
         toast.textContent = message;
         container.appendChild(toast);
@@ -43,14 +60,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function createToastContainer() {
-        const container = document.createElement('div');
+        var container = document.createElement('div');
         container.id = 'toast-container';
         document.body.appendChild(container);
         return container;
     }
 
     function showLoader(show, message) {
-        let loader = document.querySelector('.loader');
+        var loader = document.querySelector('.loader');
         if (show) {
             if (!loader) {
                 loader = document.createElement('div');
@@ -76,13 +93,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function validateXMLFile(file, expectedType) {
         return new Promise(function (resolve, reject) {
-            const reader = new FileReader();
+            var reader = new FileReader();
             reader.onload = function (e) {
-                const content = e.target.result;
-                const validator = XML_VALIDATORS[expectedType];
+                var content = e.target.result;
+                var validator = XML_VALIDATORS[expectedType];
                 if (!validator) { reject(new Error('Tipo de validacion desconocido')); return; }
                 if (!validator(content)) {
-                    const msgs = {
+                    var msgs = {
                         sdm: 'El archivo principal debe ser un Succession Data Model valido',
                         csf_sdm: 'El archivo CSF debe ser un CSF Succession Data Model valido'
                     };
@@ -99,18 +116,18 @@ document.addEventListener('DOMContentLoaded', function () {
     // ─── API calls ──────────────────────────────────────────────────────
 
     async function uploadFile(file, fileType) {
-        const formData = new FormData();
+        var formData = new FormData();
         formData.append('file', file);
         formData.append('file_type', fileType);
 
-        const response = await fetch(API_BASE + '/upload', {
+        var response = await fetch(API_BASE + '/upload', {
             method: 'POST', body: formData, credentials: 'include'
         });
         if (!response.ok) {
-            const err = await response.json();
+            var err = await response.json();
             throw new Error(err.detail || 'Upload failed');
         }
-        const result = await response.json();
+        var result = await response.json();
         if (!result.success) throw new Error(result.message || 'Upload failed');
         return result.file_id;
     }
@@ -125,40 +142,54 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function extractLanguagesFromSDM(fileId) {
-        const response = await fetch(API_BASE + '/languages/' + fileId, {
+        var response = await fetch(API_BASE + '/languages/' + fileId, {
             method: 'GET', credentials: 'include'
         });
         if (!response.ok) {
-            const err = await response.json();
+            var err = await response.json();
             throw new Error(err.detail || 'Error al extraer idiomas');
         }
-        const result = await response.json();
+        var result = await response.json();
         if (!result.success) throw new Error(result.message || 'Error al extraer idiomas');
         return result.languages;
     }
 
-    async function extractCountriesFromCSF(fileId) {
-        const response = await fetch(API_BASE + '/countries/' + fileId, {
+    async function extractEntitiesFromSDM(fileId) {
+        var response = await fetch(API_BASE + '/entities/' + fileId, {
             method: 'GET', credentials: 'include'
         });
         if (!response.ok) {
-            const err = await response.json();
+            var err = await response.json();
+            throw new Error(err.detail || 'Error al extraer entidades');
+        }
+        var result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Error al extraer entidades');
+        return result.entities;
+    }
+
+    async function extractCountriesFromCSF(fileId) {
+        var response = await fetch(API_BASE + '/countries/' + fileId, {
+            method: 'GET', credentials: 'include'
+        });
+        if (!response.ok) {
+            var err = await response.json();
             throw new Error(err.detail || 'Error al extraer paises');
         }
-        const result = await response.json();
+        var result = await response.json();
         if (!result.success) throw new Error(result.message || 'Error al extraer paises');
         return result.countries;
     }
 
-    async function processFiles(mainFileId, csfId, languageCode, countryCodes) {
-        const payload = {
+    async function processFiles(mainFileId, csfId, languageCode, countryCodes, excludedEnts) {
+        var payload = {
             main_file_id: mainFileId,
             csf_file_id: csfId || null,
             language_code: languageCode,
-            country_codes: countryCodes && countryCodes.length > 0 ? countryCodes : null
+            country_codes: countryCodes && countryCodes.length > 0 ? countryCodes : null,
+            excluded_entities: excludedEnts && excludedEnts.length > 0 ? excludedEnts : null
         };
 
-        const response = await fetch(API_BASE + '/process', {
+        var response = await fetch(API_BASE + '/process', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -166,10 +197,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         if (!response.ok) {
-            const err = await response.json();
+            var err = await response.json();
             throw new Error(err.detail || 'Processing failed');
         }
-        const result = await response.json();
+        var result = await response.json();
         if (!result.success) throw new Error(result.message || 'Processing failed');
         return result;
     }
@@ -190,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function populateLanguageSelect(languages) {
         languageSelect.innerHTML = '';
         languages.forEach(function (lang) {
-            const option = document.createElement('option');
+            var option = document.createElement('option');
             option.value = lang;
             option.textContent = lang;
             if (lang === selectedLanguage) option.selected = true;
@@ -199,15 +230,151 @@ document.addEventListener('DOMContentLoaded', function () {
         languageSelect.disabled = false;
     }
 
+    // ─── Entity modal ───────────────────────────────────────────────────
+
+    function openEntityModalFn() {
+        entityModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        setTimeout(function () { entitySearch.focus(); }, 100);
+    }
+
+    function closeEntityModalFn() {
+        entityModal.classList.remove('active');
+        document.body.style.overflow = '';
+        entitySearch.value = '';
+        filterEntities('');
+    }
+
+    function updateEntityCount() {
+        var allCb = entityCheckboxesDiv.querySelectorAll('input[type="checkbox"]');
+        var count = Array.from(allCb).filter(function (cb) { return cb.checked; }).length;
+        selectedEntitiesCountLabel.textContent = count + ' / ' + allCb.length + ' seleccionados';
+    }
+
+    function updateEntityPreview() {
+        var total = availableEntities.length;
+        var includedCount = total - excludedEntities.length;
+
+        if (excludedEntities.length === 0) {
+            selectedEntitiesPreview.textContent = 'Todas las entidades incluidas (' + total + ')';
+            selectedEntitiesPreview.style.color = 'var(--color-success)';
+        } else {
+            selectedEntitiesPreview.textContent = includedCount + ' de ' + total + ' entidades incluidas';
+            selectedEntitiesPreview.style.color = 'var(--color-warning, var(--color-gray-dark))';
+        }
+    }
+
+    function filterEntities(searchTerm) {
+        var term = searchTerm.toLowerCase().trim();
+        var items = entityCheckboxesDiv.querySelectorAll('.checkbox-item');
+        items.forEach(function (item) {
+            var cb = item.querySelector('input[type="checkbox"]');
+            item.style.display = cb.value.toLowerCase().includes(term) ? 'flex' : 'none';
+        });
+        updateEntityCount();
+    }
+
+    function populateEntityCheckboxes(entities) {
+        entityCheckboxesDiv.innerHTML = '';
+        entities.forEach(function (entity) {
+            var itemDiv = document.createElement('div');
+            itemDiv.className = 'checkbox-item';
+
+            var checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = 'entity_' + entity;
+            checkbox.value = entity;
+            checkbox.checked = !excludedEntities.includes(entity);
+            checkbox.addEventListener('change', updateEntityCount);
+
+            var isLocked = entity === NON_EXCLUDABLE_ENTITY;
+            if (isLocked) {
+                checkbox.checked = true;
+                checkbox.disabled = true;
+            }
+
+            var label = document.createElement('label');
+            label.htmlFor = 'entity_' + entity;
+            label.textContent = entity;
+            if (isLocked) {
+                label.style.fontStyle = 'italic';
+            }
+
+            itemDiv.addEventListener('click', function (e) {
+                if (isLocked) return;
+                if (e.target !== checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                    updateEntityCount();
+                }
+            });
+
+            itemDiv.appendChild(checkbox);
+            itemDiv.appendChild(label);
+            entityCheckboxesDiv.appendChild(itemDiv);
+        });
+        updateEntityCount();
+    }
+
+    function getExcludedEntitiesFromModal() {
+        var allCb = entityCheckboxesDiv.querySelectorAll('input[type="checkbox"]');
+        return Array.from(allCb)
+            .filter(function (cb) { return !cb.checked && !cb.disabled; })
+            .map(function (cb) { return cb.value; });
+    }
+
+    function resetEntitySelection() {
+        availableEntities = [];
+        excludedEntities = [];
+        entityCheckboxesDiv.innerHTML = '';
+        openEntityModalBtn.disabled = true;
+        selectedEntitiesPreview.textContent = 'Todas las entidades incluidas';
+        selectedEntitiesPreview.style.color = 'var(--color-gray-dark)';
+        if (entityHelper) {
+            entityHelper.textContent = 'Se activara al subir SDM';
+            entityHelper.style.color = 'var(--color-gray-dark)';
+        }
+    }
+
+    // ─── Entity event listeners ─────────────────────────────────────────
+
+    entitySearch.addEventListener('input', function (e) { filterEntities(e.target.value); });
+    openEntityModalBtn.addEventListener('click', openEntityModalFn);
+    closeEntityModalBtn.addEventListener('click', closeEntityModalFn);
+    cancelEntityBtn.addEventListener('click', closeEntityModalFn);
+
+    confirmEntityBtn.addEventListener('click', function () {
+        excludedEntities = getExcludedEntitiesFromModal();
+        updateEntityPreview();
+        closeEntityModalFn();
+        var included = availableEntities.length - excludedEntities.length;
+        showToast(included + ' de ' + availableEntities.length + ' entidades incluidas', 'success');
+    });
+
+    selectAllEntitiesBtn.addEventListener('click', function () {
+        entityCheckboxesDiv.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+            if (!cb.disabled) cb.checked = true;
+        });
+        updateEntityCount();
+    });
+
+    deselectAllEntitiesBtn.addEventListener('click', function () {
+        entityCheckboxesDiv.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+            if (!cb.disabled) cb.checked = false;
+        });
+        updateEntityCount();
+    });
+
+    entityModal.addEventListener('click', function (e) { if (e.target === entityModal) closeEntityModalFn(); });
+
     // ─── Country modal ──────────────────────────────────────────────────
 
-    function openModal() {
+    function openCountryModalFn() {
         countryModal.classList.add('active');
         document.body.style.overflow = 'hidden';
         setTimeout(function () { countrySearch.focus(); }, 100);
     }
 
-    function closeModal() {
+    function closeCountryModalFn() {
         countryModal.classList.remove('active');
         document.body.style.overflow = '';
         countrySearch.value = '';
@@ -215,29 +382,29 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateSelectedCount() {
-        const allCb = countryCheckboxesDiv.querySelectorAll('input[type="checkbox"]');
-        const count = Array.from(allCb).filter(function (cb) { return cb.checked; }).length;
-        selectedCountLabel.textContent = count + ' seleccionados';
+        var allCb = countryCheckboxesDiv.querySelectorAll('input[type="checkbox"]');
+        var count = Array.from(allCb).filter(function (cb) { return cb.checked; }).length;
+        selectedCountriesCountLabel.textContent = count + ' seleccionados';
     }
 
     function updatePreview() {
         if (selectedCountries.length === 0) {
-            selectedPreview.textContent = 'Ningun pais seleccionado';
-            selectedPreview.style.color = 'var(--color-gray-dark)';
+            selectedCountriesPreview.textContent = 'Ningun pais seleccionado';
+            selectedCountriesPreview.style.color = 'var(--color-gray-dark)';
         } else {
-            const preview = selectedCountries.length <= 3
+            var preview = selectedCountries.length <= 3
                 ? selectedCountries.join(', ')
                 : selectedCountries.slice(0, 3).join(', ') + ' +' + (selectedCountries.length - 3) + ' mas';
-            selectedPreview.textContent = selectedCountries.length + ' seleccionados: ' + preview;
-            selectedPreview.style.color = 'var(--color-success)';
+            selectedCountriesPreview.textContent = selectedCountries.length + ' seleccionados: ' + preview;
+            selectedCountriesPreview.style.color = 'var(--color-success)';
         }
     }
 
     function filterCountries(searchTerm) {
-        const term = searchTerm.toLowerCase().trim();
-        const items = countryCheckboxesDiv.querySelectorAll('.checkbox-item');
+        var term = searchTerm.toLowerCase().trim();
+        var items = countryCheckboxesDiv.querySelectorAll('.checkbox-item');
         items.forEach(function (item) {
-            const cb = item.querySelector('input[type="checkbox"]');
+            var cb = item.querySelector('input[type="checkbox"]');
             item.style.display = cb.value.toLowerCase().includes(term) ? 'flex' : 'none';
         });
         updateSelectedCount();
@@ -246,17 +413,17 @@ document.addEventListener('DOMContentLoaded', function () {
     function populateCountryCheckboxes(countries) {
         countryCheckboxesDiv.innerHTML = '';
         countries.forEach(function (country) {
-            const itemDiv = document.createElement('div');
+            var itemDiv = document.createElement('div');
             itemDiv.className = 'checkbox-item';
 
-            const checkbox = document.createElement('input');
+            var checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.id = 'country_' + country;
             checkbox.value = country;
             checkbox.checked = selectedCountries.includes(country);
             checkbox.addEventListener('change', updateSelectedCount);
 
-            const label = document.createElement('label');
+            var label = document.createElement('label');
             label.htmlFor = 'country_' + country;
             label.textContent = country;
 
@@ -275,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function getSelectedCountriesFromModal() {
-        const cbs = countryCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked');
+        var cbs = countryCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked');
         return Array.from(cbs).map(function (cb) { return cb.value; });
     }
 
@@ -283,9 +450,9 @@ document.addEventListener('DOMContentLoaded', function () {
         selectedCountries = [];
         csfFileId = null;
         countryCheckboxesDiv.innerHTML = '';
-        openModalBtn.disabled = true;
-        selectedPreview.textContent = 'Ningun pais seleccionado';
-        selectedPreview.style.color = 'var(--color-gray-dark)';
+        openCountryModalBtn.disabled = true;
+        selectedCountriesPreview.textContent = 'Ningun pais seleccionado';
+        selectedCountriesPreview.style.color = 'var(--color-gray-dark)';
         var helper = document.getElementById('countryCodeHelper');
         if (helper) {
             helper.textContent = 'Se activara al subir CSF';
@@ -293,44 +460,45 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ─── Event listeners ────────────────────────────────────────────────
+    // ─── Country event listeners ────────────────────────────────────────
 
     countrySearch.addEventListener('input', function (e) { filterCountries(e.target.value); });
-    openModalBtn.addEventListener('click', openModal);
-    closeModalBtn.addEventListener('click', closeModal);
-    cancelModalBtn.addEventListener('click', closeModal);
+    openCountryModalBtn.addEventListener('click', openCountryModalFn);
+    closeCountryModalBtn.addEventListener('click', closeCountryModalFn);
+    cancelCountryBtn.addEventListener('click', closeCountryModalFn);
 
-    confirmModalBtn.addEventListener('click', function () {
+    confirmCountryBtn.addEventListener('click', function () {
         selectedCountries = getSelectedCountriesFromModal();
         updatePreview();
-        closeModal();
+        closeCountryModalFn();
         if (selectedCountries.length > 0) {
             showToast(selectedCountries.length + (selectedCountries.length === 1 ? ' pais seleccionado' : ' paises seleccionados'), 'success');
         }
     });
 
-    selectAllBtn.addEventListener('click', function () {
+    selectAllCountriesBtn.addEventListener('click', function () {
         countryCheckboxesDiv.querySelectorAll('input[type="checkbox"]').forEach(function (cb) { cb.checked = true; });
         updateSelectedCount();
     });
 
-    deselectAllBtn.addEventListener('click', function () {
+    deselectAllCountriesBtn.addEventListener('click', function () {
         countryCheckboxesDiv.querySelectorAll('input[type="checkbox"]').forEach(function (cb) { cb.checked = false; });
         updateSelectedCount();
     });
 
-    countryModal.addEventListener('click', function (e) { if (e.target === countryModal) closeModal(); });
+    countryModal.addEventListener('click', function (e) { if (e.target === countryModal) closeCountryModalFn(); });
 
     // ─── File change handlers ───────────────────────────────────────────
 
     document.getElementById('mainFile').addEventListener('change', async function (e) {
-        const file = e.target.files[0];
-        const display = document.getElementById('mainFileName');
+        var file = e.target.files[0];
+        var display = document.getElementById('mainFileName');
 
         if (!file) {
             display.textContent = 'Ningun archivo seleccionado';
             if (uploadedMainFileId) { await deleteServerFile(uploadedMainFileId); uploadedMainFileId = null; }
             resetLanguageSelection();
+            resetEntitySelection();
             return;
         }
 
@@ -341,9 +509,11 @@ document.addEventListener('DOMContentLoaded', function () {
             display.textContent = file.name;
             display.style.color = 'var(--color-success)';
 
-            showLoader(true, 'Extrayendo idiomas del SDM...');
+            showLoader(true, 'Extrayendo idiomas y entidades del SDM...');
             uploadedMainFileId = await uploadFile(file, 'sdm');
-            const languages = await extractLanguagesFromSDM(uploadedMainFileId);
+
+            var languages = await extractLanguagesFromSDM(uploadedMainFileId);
+            var entities = await extractEntitiesFromSDM(uploadedMainFileId);
             showLoader(false);
 
             populateLanguageSelect(languages);
@@ -353,20 +523,33 @@ document.addEventListener('DOMContentLoaded', function () {
                 languageHelper.textContent = languages.length + (languages.length === 1 ? ' idioma encontrado' : ' idiomas encontrados');
                 languageHelper.style.color = 'var(--color-success)';
             }
-            showToast(languages.length + ' idioma(s) encontrado(s) en el SDM', 'success');
+
+            availableEntities = entities;
+            excludedEntities = [];
+            populateEntityCheckboxes(entities);
+            updateEntityPreview();
+            openEntityModalBtn.disabled = false;
+
+            if (entityHelper) {
+                entityHelper.textContent = entities.length + (entities.length === 1 ? ' entidad encontrada' : ' entidades encontradas');
+                entityHelper.style.color = 'var(--color-success)';
+            }
+
+            showToast(languages.length + ' idioma(s) y ' + entities.length + ' entidad(es) encontrada(s)', 'success');
         } catch (error) {
             display.textContent = error.message;
             display.style.color = 'var(--color-error)';
             e.target.value = '';
             showLoader(false);
             resetLanguageSelection();
+            resetEntitySelection();
             showToast(error.message, 'error');
         }
     });
 
     document.getElementById('csfFile').addEventListener('change', async function (e) {
-        const file = e.target.files[0];
-        const display = document.getElementById('csfFileName');
+        var file = e.target.files[0];
+        var display = document.getElementById('csfFileName');
 
         if (!file) {
             display.textContent = 'Ningun archivo seleccionado (opcional)';
@@ -383,10 +566,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
             showLoader(true, 'Extrayendo paises del CSF...');
             csfFileId = await uploadFile(file, 'csf_sdm');
-            const countries = await extractCountriesFromCSF(csfFileId);
+            var countries = await extractCountriesFromCSF(csfFileId);
             showLoader(false);
 
-            openModalBtn.disabled = false;
+            openCountryModalBtn.disabled = false;
             selectedCountries = [];
             populateCountryCheckboxes(countries);
             updatePreview();
@@ -412,9 +595,9 @@ document.addEventListener('DOMContentLoaded', function () {
     uploadForm.addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        const submitBtn = document.querySelector('button[type="submit"]');
-        const mainFile = document.getElementById('mainFile').files[0];
-        const languageCode = languageSelect.value;
+        var submitBtn = document.querySelector('button[type="submit"]');
+        var mainFile = document.getElementById('mainFile').files[0];
+        var languageCode = languageSelect.value;
 
         if (!mainFile && !uploadedMainFileId) {
             showToast('Selecciona el archivo principal', 'error');
@@ -432,7 +615,8 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             showLoader(true, 'Procesando archivos...');
             var countriesToSend = csfFileId ? selectedCountries : null;
-            var result = await processFiles(uploadedMainFileId, csfFileId, languageCode, countriesToSend);
+            var excludedToSend = excludedEntities.length > 0 ? excludedEntities : null;
+            var result = await processFiles(uploadedMainFileId, csfFileId, languageCode, countriesToSend, excludedToSend);
             showLoader(false);
             displayResult(result);
         } catch (error) {
