@@ -94,6 +94,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "is_master": True,
         "references": None,
         "description": "Master entity - user-id is primary key",
+        "inject": [],
         "field_types": {
             "DATE": ["date-of-birth", "date-of-death"],
             "LONG": ["attachment-id"],
@@ -110,6 +111,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["personIdExternal", "startDate"],
         "template": ["personInfo.person-id-external", "start-date"],
         "references": "personInfo",
+        "inject": ["start-date"],
         "field_types": {
             "BOOLEAN": [
                 "aboriginal-person", "challenge-status", "disabled-veteran",
@@ -136,7 +138,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["personIdExternal", "userId"],
         "template": ["person-id-external", "user-id"],
         "references": "personInfo",
-        "inject_override": ["start-date"],
+        "inject": ["start-date"],
         "field_types": {
             "BOOLEAN": [
                 "eligibleForStock", "employeeFirstEmployment",
@@ -165,7 +167,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["userId", "startDate", "seqNumber"],
         "template": ["user-id", "start-date", "seq-number", "event-reason"],
         "references": "employmentInfo",
-        "inject_override": ["start-date"],
+        "inject": ["start-date"],
         "field_types": {
             "BOOLEAN": [
                 "is-competition-clause-active", "is-cross-border-worker",
@@ -203,6 +205,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["personIdExternal", "effectiveStartDate", "addressType"],
         "template": ["personInfo.person-id-external", "start-date", "address-type"],
         "references": "personInfo",
+        "inject": ["start-date", "address-type"],
         "field_types": {
             "DATE": ["end-date"],
             "LONG": ["attachment-id", "item-id"],
@@ -223,6 +226,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["personIdExternal", "phoneType"],
         "template": ["personInfo.person-id-external", "phone-type"],
         "references": "personInfo",
+        "inject": [],
         "field_types": {
             "BOOLEAN": ["isPrimary"],
         },
@@ -238,6 +242,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["personIdExternal", "emailType"],
         "template": ["personInfo.person-id-external", "email-type"],
         "references": "personInfo",
+        "inject": [],
         "field_types": {
             "BOOLEAN": ["isPrimary"],
         },
@@ -253,6 +258,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["personIdExternal", "country", "cardType"],
         "template": ["personInfo.person-id-external", "country", "card-type"],
         "references": "personInfo",
+        "inject": [],
         "field_types": {
             "BOOLEAN": ["isPrimary", "isTemporary"],
             "DATE": ["start-date", "end-date"],
@@ -270,6 +276,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["personIdExternal", "name", "relationship"],
         "template": ["personInfo.person-id-external", "name", "relationship"],
         "references": "personInfo",
+        "inject": [],
         "field_types": {
             "BOOLEAN": [
                 "isAddSameAsEmployee", "isDependent", "isDisabled",
@@ -289,6 +296,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["personIdExternal", "relatedPersonIdExternal", "startDate"],
         "template": ["personInfo.person-id-external", "related-person-id-external", "start-date"],
         "references": "personInfo",
+        "inject": ["start-date"],
         "field_types": {
             "BOOLEAN": [
                 "is-accompanying-dependent", "is-address-same-as-person",
@@ -307,6 +315,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["userId", "startDate", "seqNumber"],
         "template": ["user-id", "start-date", "seq-number", "event-reason"],
         "references": "employmentInfo",
+        "inject": ["start-date", "event-reason"],
         "field_types": {
             "BOOLEAN": [
                 "is-eligible-for-benefits", "is-eligible-for-car",
@@ -331,6 +340,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["userId", "payComponent", "startDate", "seqNumber"],
         "template": ["user-id", "pay-component", "start-date", "seq-number"],
         "references": "employmentInfo",
+        "inject": ["start-date"],
         "field_types": {
             "DATE": ["no-changes-until-date"],
             "DOUBLE": ["calculated-amount", "number-of-units", "paycompvalue"],
@@ -348,6 +358,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["userId", "payComponentCode", "payDate"],
         "template": ["user-id", "pay-component-code", "pay-date"],
         "references": "employmentInfo",
+        "inject": [],
         "field_types": {
             "DATE": [
                 "non-recurring-pay-period-end-date",
@@ -369,6 +380,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["userId", "country", "documentType", "documentNumber", "issueDate"],
         "template": ["user-id", "country", "document-type", "document-number", "issue-date"],
         "references": "employmentInfo",
+        "inject": [],
         "field_types": {
             "BOOLEAN": ["is-validated"],
             "DATE": ["expiration-date", "issue-date"],
@@ -386,6 +398,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["userId"],
         "template": ["user-id"],
         "references": "employmentInfo",
+        "inject": [],
         "field_types": {
             "DATE": ["end-date", "planned-end-date", "payroll-end-date"],
         },
@@ -401,6 +414,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["userId", "relationshipType", "startDate"],
         "template": ["user-id", "relationship-type", "start-date"],
         "references": "employmentInfo",
+        "inject": ["start-date"],
         "field_types": {},
         "ranges": [
             ("custom-string", 1, 20, "STRING"),
@@ -414,6 +428,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["personIdExternal", "startDate", "country"],
         "template": ["personInfo.person-id-external", "start-date", "country"],
         "references": "personInfo",
+        "inject": ["start-date"],
         "field_types": {
             "DATE": ["end-date"],
             "LONG": ["attachment-id"],
@@ -433,6 +448,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["personIdExternal", "domain"],
         "template": ["personInfo.person-id-external", "domain"],
         "references": "personInfo",
+        "inject": [],
         "field_types": {},
         "ranges": [
             ("custom-string", 1, 20, "STRING"),
@@ -446,6 +462,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["userId"],
         "template": ["user-id"],
         "references": "employmentInfo",
+        "inject": [],
         "field_types": {
             "DATE": [
                 "end-date", "payroll-end-date", "planned-end-date",
@@ -468,6 +485,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["personIdExternal", "country"],
         "template": ["personInfo.person-id-external", "country", "user-id"],
         "references": "personInfo",
+        "inject": [],
         "field_types": {},
         "ranges": [],
     },
@@ -476,23 +494,10 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["paymentMethod"],
         "template": ["payment-method"],
         "references": "employmentInfo",
-        "inject_override": ["effectiveStartDate"],
+        "inject": ["effectiveStartDate"],
         "field_types": {},
         "ranges": [],
     },
-}
-
-# ─── Campos de identidad/referencia (no requieren inyección sintética) ───────
-# Estos campos existen como nodos regulares en el XML y no necesitan
-# ser creados artificialmente por el parser.
-_NON_INJECTABLE_FIELDS: set[str] = {
-    "user-id", "person-id-external", "seq-number",
-    "related-person-id-external",
-    "country", "card-type", "phone-type", "email-type", "domain",
-    "name", "relationship", "relationship-type",
-    "document-type", "document-number", "issue-date",
-    "pay-component", "pay-component-code", "pay-date",
-    "payment-method",
 }
 
 # ─── Índice invertido de tipos (construido al importar) ──────────────────────
@@ -591,23 +596,15 @@ def get_metadata_type(entity: str, field_id: str) -> str | None:
 
 
 def get_injectable_fields(entity: str) -> list[str]:
-    """Deriva los campos que necesitan inyección sintética en el XML.
+    """Retorna los campos que necesitan inyección sintética en el XML.
 
-    Para la mayoría de entidades se calcula automáticamente:
-    campos del template que no son cross-references (con .) ni campos
-    de identidad conocidos (_NON_INJECTABLE_FIELDS).
-
-    Entidades con inject_override usan esa lista directamente.
+    Cada entidad declara explícitamente en 'inject' qué campos crear
+    artificialmente porque no existen como <hris-field> en el XML.
     """
     config = SAP_ENTITY_CONFIGS.get(entity)
     if not config:
         return []
-    if "inject_override" in config:
-        return list(config["inject_override"])
-    return [
-        f for f in config["template"]
-        if "." not in f and f not in _NON_INJECTABLE_FIELDS
-    ]
+    return list(config.get("inject", []))
 
 
 # ─── Golden Record: campos excluidos ─────────────────────────────────────────
