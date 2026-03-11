@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
-    var NON_EXCLUDABLE_ENTITY = 'personInfo';
+    var NON_EXCLUDABLE_ENTITIES = [
+        'personInfo', 'personalInfo', 'employmentInfo', 'jobInfo', 'compInfo'
+    ];
 
     var API_BASE = '/api/dxsentinel';
 
@@ -287,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function () {
             checkbox.checked = !excludedEntities.includes(entity);
             checkbox.addEventListener('change', updateEntityCount);
 
-            var isLocked = entity === NON_EXCLUDABLE_ENTITY;
+            var isLocked = NON_EXCLUDABLE_ENTITIES.indexOf(entity) !== -1;
             if (isLocked) {
                 checkbox.checked = true;
                 checkbox.disabled = true;

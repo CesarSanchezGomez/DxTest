@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Set
 import logging
 
-from ...constants import ELEMENT_ORDER
+from ...constants import ELEMENT_ORDER, get_injected_field_labels
 from .field_filter import FieldFilter
 from .field_finder import GoldenRecordFieldFinder
 from .exceptions import ElementNotFoundError
@@ -23,6 +23,11 @@ class ElementProcessor:
         self.global_field_ids: Set[str] = set()
         self.target_countries = [c.upper() for c in target_countries] if target_countries else None
         self.excluded_entities: Set[str] = set(excluded_entities) if excluded_entities else set()
+
+        # Campos que siempre deben aparecer aunque su entidad esté excluida
+        self._forced_fields: Dict[str, List[str]] = {
+            "emailInfo": ["email-address"],
+        }
 
     def _normalize_country_code(self, country_code: str) -> str:
         return country_code.strip().upper()
@@ -99,6 +104,14 @@ class ElementProcessor:
                 )
                 if processed["field_count"] > 0:
                     all_elements_list.append(processed)
+
+            # Inyectar campos obligatorios de entidades excluidas
+            for entity_id, forced_fields in self._forced_fields.items():
+                if entity_id not in self.excluded_entities:
+                    continue
+                forced_element = self._build_forced_element(entity_id, forced_fields)
+                if forced_element["field_count"] > 0:
+                    all_elements_list.append(forced_element)
 
             format_groups_by_country = {}
             for country_node in filtered_country_nodes:
@@ -234,4 +247,38 @@ class ElementProcessor:
             "instructions": instructions,
             "display_format": display_format,
             "reg_ex": reg_ex,
+        }
+
+    def _build_forced_element(self, entity_id: str, field_ids: List[str]) -> Dict:
+        """Construye un elemento sintético con campos obligatorios."""
+        fields = []
+        for field_id in field_ids:
+            full_field_id = f"{entity_id}_{field_id}"
+            if full_field_id in self.global_field_ids:
+                continue
+            self.global_field_ids.add(full_field_id)
+            labels = get_injected_field_labels(field_id)
+            synthetic_node = {
+                "tag": "hris-field",
+                "technical_id": field_id,
+                "attributes": {"raw": {"id": field_id, "visibility": "both", "required": "false"}},
+                "labels": labels,
+                "children": [],
+            }
+            fields.append({
+                "field_id": field_id,
+                "full_field_id": full_field_id,
+                "node": synthetic_node,
+                "origin": "forced",
+                "is_country_specific": False,
+                "country_code": None,
+                "is_business_key": False,
+            })
+        return {
+            "element_id": entity_id,
+            "origin": "forced",
+            "fields": fields,
+            "is_country_specific": False,
+            "country_code": None,
+            "field_count": len(fields),
         }

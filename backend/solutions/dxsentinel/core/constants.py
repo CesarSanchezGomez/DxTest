@@ -69,6 +69,12 @@ INJECTED_FIELD_LABELS: dict[str, dict[str, str]] = {
         "es-mx": "ID de Usuario",
         "en-us": "User ID",
     },
+    "email-address": {
+        "default": "Email Address",
+        "en-debug": "Email Address",
+        "es-mx": "Correo Electronico",
+        "en-us": "Email Address",
+    },
 }
 
 
