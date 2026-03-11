@@ -278,7 +278,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function populateEntityCheckboxes(entities) {
         entityCheckboxesDiv.innerHTML = '';
-        entities.forEach(function (entity) {
+
+        var locked = entities.filter(function (e) {
+            return NON_EXCLUDABLE_ENTITIES.indexOf(e) !== -1;
+        }).sort();
+        var optional = entities.filter(function (e) {
+            return NON_EXCLUDABLE_ENTITIES.indexOf(e) === -1;
+        }).sort();
+        var sorted = locked.concat(optional);
+
+        sorted.forEach(function (entity) {
             var itemDiv = document.createElement('div');
             itemDiv.className = 'checkbox-item';
 
