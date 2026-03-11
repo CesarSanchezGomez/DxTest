@@ -12,13 +12,17 @@ logger = logging.getLogger(__name__)
 class ElementProcessor:
     """Procesa elementos según jerarquía del Golden Record."""
 
-    def __init__(self, target_countries: Optional[List[str]] = None):
+    def __init__(
+        self, target_countries: Optional[List[str]] = None,
+        excluded_entities: Optional[List[str]] = None,
+    ):
         if target_countries and isinstance(target_countries, str):
             target_countries = [target_countries]
 
         self.field_filter = FieldFilter()
         self.global_field_ids: Set[str] = set()
         self.target_countries = [c.upper() for c in target_countries] if target_countries else None
+        self.excluded_entities: Set[str] = set(excluded_entities) if excluded_entities else set()
 
     def _normalize_country_code(self, country_code: str) -> str:
         return country_code.strip().upper()
@@ -76,6 +80,8 @@ class ElementProcessor:
             all_elements_list = []
 
             for elem_id, elem_data in global_elements_dict.items():
+                if elem_id in self.excluded_entities:
+                    continue
                 processed = self._process_element(
                     elem_data["node"], elem_id, origin=elem_data["origin"],
                     is_country_specific=False, country_code=None,
@@ -84,6 +90,9 @@ class ElementProcessor:
                     all_elements_list.append(processed)
 
             for country_elem_id, elem_data in country_specific_elements.items():
+                base_entity = country_elem_id.split("_", 1)[1] if "_" in country_elem_id else country_elem_id
+                if base_entity in self.excluded_entities:
+                    continue
                 processed = self._process_element(
                     elem_data["node"], country_elem_id, origin=elem_data["origin"],
                     is_country_specific=True, country_code=elem_data["country_code"],

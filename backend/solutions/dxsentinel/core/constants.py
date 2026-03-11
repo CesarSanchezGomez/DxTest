@@ -63,6 +63,12 @@ INJECTED_FIELD_LABELS: dict[str, dict[str, str]] = {
         "es-mx": "Tipo de Dirección",
         "en-us": "Address Type",
     },
+    "user-id": {
+        "default": "User ID",
+        "en-debug": "User ID",
+        "es-mx": "ID de Usuario",
+        "en-us": "User ID",
+    },
 }
 
 
@@ -77,7 +83,7 @@ def get_injected_field_labels(field_id: str) -> dict[str, str]:
 #   template       — nombres XML/golden record para las business keys
 #   is_master      — True si es entidad raíz (default False)
 #   references     — entidad padre (None si es master)
-#   inject_override — campos a inyectar si la derivación automática no aplica
+#   inject         — campos a inyectar sintéticamente (no existen como <hris-field> en XML)
 #   field_types    — dict agrupado por tipo SAP (solo tipos NO-STRING)
 #   ranges         — (prefijo, inicio, fin, tipo) para campos numerados
 #   alt_type_overrides — excepciones de tipo para variantes -alt1/-alt2
@@ -89,12 +95,12 @@ def get_injected_field_labels(field_id: str) -> dict[str, str]:
 SAP_ENTITY_CONFIGS: dict[str, dict] = {
     # ── personInfo (master) ──────────────────────────────────────────────────
     "personInfo": {
-        "business_keys": ["userId", "personIdExternal"],
-        "template": ["user-id", "person-id-external"],
+        "business_keys": ["personIdExternal"],
+        "template": ["person-id-external"],
         "is_master": True,
         "references": None,
-        "description": "Master entity - user-id is primary key",
-        "inject": [],
+        "description": "Master entity - personIdExternal is primary key",
+        "inject": ["user-id"],
         "field_types": {
             "DATE": ["date-of-birth", "date-of-death"],
             "LONG": ["attachment-id"],

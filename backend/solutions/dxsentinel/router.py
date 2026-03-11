@@ -2,7 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from fastapi.responses import FileResponse
 
 from backend.core.auth.dependencies import get_current_user
-from .models import UploadResponse, LanguagesResponse, CountriesResponse, ProcessRequest, ProcessResponse
+from .models import UploadResponse, LanguagesResponse, CountriesResponse, EntitiesResponse, ProcessRequest, ProcessResponse
 from .services import FileService, ProcessingService, MAX_UPLOAD_SIZE
 
 router = APIRouter(prefix="/api/dxsentinel", tags=["dxsentinel"])
@@ -37,6 +37,19 @@ async def extract_languages(file_id: str, user=Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=f"Error extrayendo idiomas: {str(e)}")
 
 
+@router.get("/entities/{file_id}", response_model=EntitiesResponse)
+async def extract_entities(file_id: str, user=Depends(get_current_user)):
+    file_path = FileService.get_path(file_id)
+    if not file_path:
+        raise HTTPException(status_code=404, detail="Archivo no encontrado")
+
+    try:
+        entities = ProcessingService.extract_entities(file_path)
+        return EntitiesResponse(success=True, entities=entities)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error extrayendo entidades: {str(e)}")
+
+
 @router.get("/countries/{file_id}", response_model=CountriesResponse)
 async def extract_countries(file_id: str, user=Depends(get_current_user)):
     file_path = FileService.get_path(file_id)
@@ -68,6 +81,7 @@ async def process_files(request: ProcessRequest, user=Depends(get_current_user))
             csf_file_path=csf_path,
             language_code=request.language_code,
             country_codes=request.country_codes,
+            excluded_entities=request.excluded_entities,
         )
         return ProcessResponse(
             success=True,

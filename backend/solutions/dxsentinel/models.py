@@ -19,11 +19,17 @@ class CountriesResponse(BaseModel):
     countries: list[str] = []
 
 
+class EntitiesResponse(BaseModel):
+    success: bool
+    entities: list[str] = []
+
+
 class ProcessRequest(BaseModel):
     main_file_id: str
     csf_file_id: Optional[str] = None
     language_code: str = Field(default="en-US", pattern=r"^[a-zA-Z]{2}(-[a-zA-Z]{2,})?$")
     country_codes: Optional[list[str]] = None
+    excluded_entities: Optional[list[str]] = None
 
 
 class ProcessResponse(BaseModel):

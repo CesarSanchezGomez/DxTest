@@ -5,7 +5,6 @@ class BusinessKeyResolver:
     """Resuelve mapeo de business keys entre formato SAP y Golden Record."""
 
     SPECIAL_KEY_MAPPINGS = {
-        "user-id": "personInfo_user-id",
         "person-id-external": "personInfo_person-id-external",
         "personInfo.person-id-external": "personInfo_person-id-external",
     }

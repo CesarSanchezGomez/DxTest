@@ -13,11 +13,18 @@ from ..reports.field_report_generator import FieldReportGenerator
 class CSVGenerator:
     """Genera CSVs del Golden Record ordenados por elemento."""
 
-    def __init__(self, target_countries: Optional[List[str]] = None, language_code: Optional[str] = None):
+    def __init__(
+        self, target_countries: Optional[List[str]] = None,
+        language_code: Optional[str] = None,
+        excluded_entities: Optional[List[str]] = None,
+    ):
         if target_countries and isinstance(target_countries, str):
             target_countries = [target_countries]
 
-        self.processor = ElementProcessor(target_countries=target_countries)
+        self.processor = ElementProcessor(
+            target_countries=target_countries,
+            excluded_entities=excluded_entities,
+        )
         self.language_resolver = GoldenRecordLanguageResolver()
         self.metadata_gen = MetadataGenerator()
         self.report_gen = FieldReportGenerator()

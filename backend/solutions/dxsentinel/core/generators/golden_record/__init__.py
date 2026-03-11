@@ -13,6 +13,7 @@ class GoldenRecordGenerator:
     def __init__(
         self, output_dir: str = "output/golden_record",
         target_countries: Optional[List[str]] = None,
+        excluded_entities: Optional[List[str]] = None,
     ):
         self.output_dir = output_dir
 
@@ -20,7 +21,11 @@ class GoldenRecordGenerator:
             target_countries = [target_countries]
 
         self.target_countries = target_countries
-        self.csv_gen = CSVGenerator(target_countries=target_countries)
+        self.excluded_entities = excluded_entities
+        self.csv_gen = CSVGenerator(
+            target_countries=target_countries,
+            excluded_entities=excluded_entities,
+        )
 
     def generate_template(self, parsed_model: Dict, language_code: str = "en") -> Dict[str, str]:
         """Genera golden_record_template.csv, metadata JSON y field report XLSX."""

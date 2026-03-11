@@ -89,6 +89,28 @@ class ProcessingService:
         return sorted(languages)
 
     @staticmethod
+    def extract_entities(file_path: Path) -> list[str]:
+        """Extrae entidades disponibles (hris-element ids) de un archivo SDM."""
+        tree = ET.parse(str(file_path))
+        root = tree.getroot()
+
+        entities = []
+        seen = set()
+
+        for elem in root.iter():
+            tag = elem.tag
+            if "}" in tag:
+                tag = tag.split("}", 1)[1]
+
+            if "hris" in tag.lower() and "element" in tag.lower():
+                entity_id = elem.get("id")
+                if entity_id and entity_id not in seen:
+                    seen.add(entity_id)
+                    entities.append(entity_id)
+
+        return entities
+
+    @staticmethod
     def extract_countries(file_path: Path) -> list[str]:
         """Extrae países disponibles de un archivo CSF."""
         tree = ET.parse(str(file_path))
@@ -114,6 +136,7 @@ class ProcessingService:
         csf_file_path: Optional[Path],
         language_code: str,
         country_codes: Optional[list[str]],
+        excluded_entities: Optional[list[str]] = None,
         output_dir: Optional[Path] = None,
     ) -> dict:
         """Procesa archivos XML y genera golden record + metadata + report."""
@@ -139,6 +162,7 @@ class ProcessingService:
         generator = GoldenRecordGenerator(
             output_dir=str(output_dir),
             target_countries=country_codes,
+            excluded_entities=excluded_entities,
         )
         result_files = generator.generate_template(
             parsed_model=parsed_model,
