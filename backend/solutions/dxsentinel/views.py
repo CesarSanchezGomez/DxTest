@@ -16,3 +16,11 @@ async def dx_sentinel_home(request: Request, user=Depends(get_current_user)):
         "request": request,
         "user": user,
     })
+
+
+@router.get("/upload", response_class=HTMLResponse)
+async def dx_sentinel_upload(request: Request, user=Depends(get_current_user)):
+    return templates.TemplateResponse("solutions/dxsentinel/upload.html", {
+        "request": request,
+        "user": user,
+    })

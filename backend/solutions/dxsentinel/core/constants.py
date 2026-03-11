@@ -446,8 +446,22 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["userId"],
         "template": ["user-id"],
         "references": "employmentInfo",
-        "field_types": {},
-        "ranges": [],
+        "field_types": {
+            "DATE": [
+                "end-date", "payroll-end-date", "planned-end-date",
+                "start-date",
+            ],
+        },
+        "ranges": [
+            ("custom-string", 101, 115, "STRING"),
+            ("custom-string", 116, 120, "STRING"),
+            ("custom-date", 31, 35, "DATE"),
+            ("custom-date", 36, 40, "DATE"),
+            ("custom-long", 21, 25, "LONG"),
+            ("custom-long", 26, 30, "LONG"),
+            ("custom-double", 21, 25, "DOUBLE"),
+            ("custom-double", 26, 30, "DOUBLE"),
+        ],
     },
     # ── biographicalInfoLoc ──────────────────────────────────────────────────
     "biographicalInfoLoc": {
@@ -457,11 +471,11 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "field_types": {},
         "ranges": [],
     },
-    # ── paymentInfo (sin business keys SAP, solo inyección) ──────────────────
+    # ── paymentInfo ───────────────────────────────────────────────────────────
     "paymentInfo": {
-        "business_keys": [],
-        "template": [],
-        "references": None,
+        "business_keys": ["paymentMethod"],
+        "template": ["payment-method"],
+        "references": "employmentInfo",
         "inject_override": ["effectiveStartDate"],
         "field_types": {},
         "ranges": [],
@@ -478,6 +492,7 @@ _NON_INJECTABLE_FIELDS: set[str] = {
     "name", "relationship", "relationship-type",
     "document-type", "document-number", "issue-date",
     "pay-component", "pay-component-code", "pay-date",
+    "payment-method",
 }
 
 # ─── Índice invertido de tipos (construido al importar) ──────────────────────

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}DxSentinel - Golden Record Generator{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h3>Generar Golden Record</h3>
+    <p>Sube tus archivos SDM y CSF para generar el Golden Record template</p>
+</div>
+
+<div class="cards-stack">
+    <div class="cards-grid">
+        <div class="card">
+            <div class="card-header">
+                <h3>Archivos de Entrada</h3>
+            </div>
+            <div class="card-body">
+                <form id="uploadForm">
+                    <div class="form-group">
+                        <label for="mainFile">Archivo Principal (SDM):</label>
+                        <input type="file" id="mainFile" class="file-input" accept=".xml" required>
+                        <label for="mainFile" class="file-label">Seleccionar XML principal</label>
+                        <span class="file-name" id="mainFileName">Ningun archivo seleccionado</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="csfFile">Archivo CSF (Opcional):</label>
+                        <input type="file" id="csfFile" class="file-input" accept=".xml">
+                        <label for="csfFile" class="file-label">Seleccionar CSF</label>
+                        <span class="file-name" id="csfFileName">Ningun archivo seleccionado (opcional)</span>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>Configuracion</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="languageCode">Idioma:</label>
+                    <select id="languageCode" class="search-input" required disabled style="cursor: pointer;">
+                        <option value="en-US">en-US</option>
+                    </select>
+                    <span class="file-name" id="languageHelper">Se activara al subir SDM</span>
+                </div>
+                <div class="form-group">
+                    <label>Paises:</label>
+                    <button type="button" id="openCountryModal" class="btn btn-outline" disabled style="width: 100%;">
+                        Seleccionar Paises
+                    </button>
+                    <span class="file-name" id="selectedCountriesPreview">Ningun pais seleccionado</span>
+                    <span class="file-name" id="countryCodeHelper">Se activara al subir CSF</span>
+                </div>
+                <div class="card-actions">
+                    <button type="submit" form="uploadForm" class="btn btn-primary">
+                        Procesar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="status" style="display: none;"></div>
+
+    <div id="resultCard" class="card" style="display: none;">
+        <div class="card-header">
+            <h3>Resultado</h3>
+        </div>
+        <div class="card-body">
+            <div id="resultInfo"></div>
+        </div>
+    </div>
+</div>
+
+<div id="countryModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Seleccionar Paises</h3>
+            <button type="button" class="modal-close" id="closeCountryModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <input type="text" id="countrySearch" class="search-input" placeholder="Buscar paises..."
+                       style="margin-bottom: var(--spacing-md);">
+            </div>
+            <div class="selection-summary"
+                 style="align-items: center; justify-content: space-between; margin-bottom: var(--spacing-md);">
+                <div class="summary-item">
+                    <button type="button" id="selectAllCountries" class="btn btn-secondary">Todos</button>
+                    <button type="button" id="deselectAllCountries" class="btn btn-secondary">Ninguno</button>
+                </div>
+                <div class="badge" id="selectedCountriesCount">0 seleccionados</div>
+            </div>
+            <div class="checkbox-group" id="countryCheckboxes"></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="cancelCountrySelection">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="confirmCountrySelection">Confirmar Seleccion</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/solutions/dxsentinel/upload.js"></script>
+{% endblock %}
