@@ -1,6 +1,6 @@
 from typing import Dict
 
-from ...constants import SAP_BUSINESS_KEYS
+from ...constants import SAP_ENTITY_CONFIGS
 
 
 class FieldCategorizer:
@@ -10,15 +10,15 @@ class FieldCategorizer:
         "person-id-external", "user-id", "personidexternal", "userid",
     }
 
-    def __init__(self, business_keys_config: Dict[str, Dict] = None):
-        self.business_keys_config = business_keys_config or SAP_BUSINESS_KEYS
+    def __init__(self, entity_configs: Dict[str, Dict] = None):
+        self.entity_configs = entity_configs or SAP_ENTITY_CONFIGS
         self._build_key_index()
 
     def _build_key_index(self):
         self.key_index = {}
-        for entity_id, config in self.business_keys_config.items():
-            keys = config.get("keys", [])
-            sap_keys = config.get("sap_format", [])
+        for entity_id, config in self.entity_configs.items():
+            keys = config.get("business_keys", [])
+            sap_keys = config.get("template", [])
             self.key_index[entity_id] = {
                 "keys": set(keys),
                 "sap_keys": set(sap_keys),

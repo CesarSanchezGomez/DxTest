@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional
 from datetime import datetime
 
-from ...constants import SAP_BUSINESS_KEYS, STRING_OVERRIDE_FIELDS
+from ...constants import SAP_ENTITY_CONFIGS, get_metadata_type
 from .business_key_resolver import BusinessKeyResolver
 from .field_identifier_extractor import FieldIdentifierExtractor
 from .field_categorizer import FieldCategorizer
@@ -12,7 +12,7 @@ class MetadataGenerator:
     def __init__(self):
         self.key_resolver = BusinessKeyResolver()
         self.field_extractor = FieldIdentifierExtractor()
-        self.field_categorizer = FieldCategorizer(SAP_BUSINESS_KEYS)
+        self.field_categorizer = FieldCategorizer(SAP_ENTITY_CONFIGS)
 
     def generate_metadata(self, processed_data: Dict, columns: List[Dict]) -> Dict:
         elements = processed_data.get("elements", [])
@@ -66,13 +66,13 @@ class MetadataGenerator:
     def _analyze_element(self, element: Dict) -> Dict:
         element_id = element["element_id"]
         fields = element["fields"]
-        sap_config = SAP_BUSINESS_KEYS.get(element_id, {})
+        sap_config = SAP_ENTITY_CONFIGS.get(element_id, {})
 
         return {
             "element_id": element_id,
             "is_master": sap_config.get("is_master", False),
-            "business_keys": sap_config.get("keys", []),
-            "sap_format_keys": sap_config.get("sap_format", []),
+            "business_keys": sap_config.get("business_keys", []),
+            "sap_format_keys": sap_config.get("template", []),
             "references": sap_config.get("references"),
             "field_count": len(fields),
             "description": sap_config.get("description", f"Standard {element_id} entity"),
@@ -113,7 +113,7 @@ class MetadataGenerator:
                 "field": field_id,
                 "is_business_key": is_business_key,
                 "is_hris_field": is_hris,
-                "data_type": self._infer_data_type(field_id),
+                "data_type": self._resolve_data_type(element_id, field_id),
                 "category": self._categorize_field(field_id),
                 "max_length": max_length,
                 "required": is_required,
@@ -202,27 +202,10 @@ class MetadataGenerator:
 
         return config
 
-    def _infer_data_type(self, field_id: str) -> str:
-        field_lower = field_id.lower()
-        field_normalized = field_lower.replace("-", "").replace("_", "")
-
-        for override in STRING_OVERRIDE_FIELDS:
-            if override.replace("-", "") == field_normalized:
-                return "string"
-
-        if "date" in field_lower:
-            return "date"
-        if field_lower.startswith("is-") or field_lower.startswith("is_"):
-            return "boolean"
-        if field_normalized in {"isprimary", "isfulltimeemployee", "isdependent", "isdisabled", "isstudent"}:
-            return "boolean"
-        if "id" in field_lower or "code" in field_lower or "type" in field_lower:
-            return "string"
-        if field_normalized in {"seqnumber", "sequence"}:
-            return "integer"
-        if any(x in field_lower for x in ["amount", "value", "fte", "rate", "ratio"]):
-            return "decimal"
-
+    def _resolve_data_type(self, element_id: str, field_id: str) -> str:
+        sap_type = get_metadata_type(element_id, field_id)
+        if sap_type:
+            return sap_type
         return "string"
 
     def _categorize_field(self, field_id: str) -> str:

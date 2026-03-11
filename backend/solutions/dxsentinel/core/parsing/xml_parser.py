@@ -8,7 +8,7 @@ from ..constants import (
     LABEL_PATTERNS,
     LANGUAGE_PATTERN,
     HRIS_ELEMENT_PATTERN,
-    ELEMENT_FIELD_MAPPING,
+    get_injectable_fields,
     get_injected_field_labels,
 )
 
@@ -201,9 +201,8 @@ class XMLParser:
         if not HRIS_ELEMENT_PATTERN.match(node.tag):
             return []
         element_id = node.technical_id or node.attributes.get("id")
-        if element_id and element_id in ELEMENT_FIELD_MAPPING:
-            field_config = ELEMENT_FIELD_MAPPING[element_id]
-            return field_config if isinstance(field_config, list) else [field_config]
+        if element_id:
+            return get_injectable_fields(element_id)
         return []
 
     def _create_date_field_node(self, field_id: str) -> XMLNode:
