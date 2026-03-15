@@ -49,6 +49,12 @@ class FieldReportGenerator:
 
         _apply_table_borders(ws, first_row=1, last_row=last_row, first_col=1, last_col=len(self.HEADERS))
 
+        # Hoja de validacion (si hay issues)
+        validation = metadata.get("validation", {})
+        issues = validation.get("issues", [])
+        if issues:
+            self._write_validation_sheet(wb, issues, validation.get("summary", {}))
+
         wb.save(output_path)
         return output_path
 
@@ -157,3 +163,76 @@ class FieldReportGenerator:
         widths = [18, 30, 35, 10, 12, 12, 22, 12, 14]
         for col_idx, width in enumerate(widths, start=1):
             ws.column_dimensions[get_column_letter(col_idx)].width = width
+
+    # ── Hoja de validacion ───────────────────────────────────────────────
+
+    _VALIDATION_HEADERS = ["Severity", "Code", "Message", "Element", "Field", "Country", "Validator"]
+    _SEVERITY_COLORS = {
+        "fatal": "D32F2F",
+        "error": "F57C00",
+        "warning": "FBC02D",
+    }
+
+    def _write_validation_sheet(self, wb, issues: List[Dict], summary: Dict) -> None:
+        ws = wb.create_sheet("Validation")
+
+        # Header
+        for col_idx, header in enumerate(self._VALIDATION_HEADERS, start=1):
+            cell = ws.cell(row=1, column=col_idx, value=header)
+            cell.font = Font(bold=True, color=self._COLOR_HEADER_FONT, size=11, name="Calibri")
+            cell.fill = PatternFill("solid", fgColor=self._COLOR_HEADER_BG)
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+        ws.row_dimensions[1].height = 20
+
+        # Summary row
+        summary_text = (
+            f"Total: {summary.get('total', 0)} | "
+            f"Fatal: {summary.get('fatal', 0)} | "
+            f"Error: {summary.get('error', 0)} | "
+            f"Warning: {summary.get('warning', 0)}"
+        )
+        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=len(self._VALIDATION_HEADERS))
+        cell = ws.cell(row=2, column=1, value=summary_text)
+        cell.font = Font(bold=True, size=10, name="Calibri")
+        cell.fill = PatternFill("solid", fgColor=self._COLOR_ALT_ROW)
+        cell.alignment = Alignment(horizontal="left", vertical="center", indent=1)
+
+        # Issue rows
+        for row_idx, issue in enumerate(issues, start=3):
+            severity = issue.get("severity", "")
+            values = [
+                severity.upper(),
+                issue.get("code", ""),
+                issue.get("message", ""),
+                issue.get("element_id", "") or "-",
+                issue.get("field_id", "") or "-",
+                issue.get("country_code", "") or "-",
+                issue.get("validator", "") or "-",
+            ]
+
+            color = self._SEVERITY_COLORS.get(severity, "FFFFFF")
+            fill = PatternFill("solid", fgColor=color)
+            severity_fill = fill
+
+            for col_idx, value in enumerate(values, start=1):
+                cell = ws.cell(row=row_idx, column=col_idx, value=value)
+                cell.font = Font(
+                    size=10, name="Calibri",
+                    color="FFFFFF" if col_idx == 1 else "000000",
+                    bold=col_idx == 1,
+                )
+                cell.fill = severity_fill if col_idx == 1 else PatternFill("solid", fgColor="FFFFFF")
+                cell.alignment = Alignment(
+                    horizontal="center" if col_idx in {1, 2} else "left",
+                    vertical="center",
+                )
+
+        # Column widths
+        val_widths = [12, 16, 60, 22, 28, 10, 22]
+        for col_idx, width in enumerate(val_widths, start=1):
+            ws.column_dimensions[get_column_letter(col_idx)].width = width
+
+        ws.freeze_panes = "A3"
+
+        last_row = max(3, 2 + len(issues))
+        _apply_table_borders(ws, first_row=1, last_row=last_row, first_col=1, last_col=len(self._VALIDATION_HEADERS))
