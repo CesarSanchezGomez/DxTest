@@ -1,11 +1,17 @@
-"""Validaciones especificas de Mexico → ERROR."""
+"""Validaciones especificas de Mexico → ERROR.
+
+Verifica configuracion de entidades relevantes para MX:
+- nationalIdCard (CURP): requiere card-type, country
+- workPermitInfo: requiere document-type, document-number, country
+- Format groups MX: deben tener regex definidos
+"""
 
 from __future__ import annotations
 
 import re
 
-from ....validation.registry import register_validator
-from ....validation.result import Severity, ValidationResult
+from ..registry import register_validator
+from ..result import Severity, ValidationResult
 from ..base import ValidationContext
 from .base import CountryValidator
 
@@ -24,7 +30,7 @@ _RFC_PATTERN = re.compile(
 
 @register_validator
 class MexicoValidator(CountryValidator):
-    """Validaciones para Mexico: CURP, RFC, format groups."""
+    """Validaciones para Mexico: CURP, RFC, work permit."""
 
     @property
     def country_code(self) -> str:
@@ -33,30 +39,10 @@ class MexicoValidator(CountryValidator):
     def validate_country(self, ctx: ValidationContext) -> list[ValidationResult]:
         issues: list[ValidationResult] = []
 
-        self._check_format_groups(ctx, issues)
         self._check_national_id_config(ctx, issues)
         self._check_work_permit_config(ctx, issues)
 
         return issues
-
-    def _check_format_groups(self, ctx: ValidationContext, issues: list[ValidationResult]) -> None:
-        """Verifica que MX tenga format groups con regex definidos."""
-        mx_groups = ctx.format_groups.get("MX", {})
-
-        for group_id, group_data in mx_groups.items():
-            formats = group_data.get("formats", [])
-            for fmt in formats:
-                if not fmt.get("reg_ex"):
-                    issues.append(ValidationResult(
-                        severity=Severity.ERROR,
-                        code="MX_FMT_001",
-                        message=(
-                            f"Format group '{group_id}' formato '{fmt.get('id')}' "
-                            f"sin regex definido"
-                        ),
-                        country_code="MX",
-                        validator=self.name,
-                    ))
 
     def _check_national_id_config(self, ctx: ValidationContext, issues: list[ValidationResult]) -> None:
         """Verifica configuracion de nationalIdCard para MX (CURP)."""
@@ -71,7 +57,6 @@ class MexicoValidator(CountryValidator):
 
             field_ids = {f.get("field_id", "") for f in elem.get("fields", [])}
 
-            # CURP requiere card-type y national-id
             required_fields = {"card-type", "country"}
             missing = required_fields - field_ids
             if missing:

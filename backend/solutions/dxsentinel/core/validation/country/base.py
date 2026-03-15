@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 
-from ...result import ValidationResult
+from ..result import ValidationResult
 from ..base import BaseValidator, ValidationContext
 
 

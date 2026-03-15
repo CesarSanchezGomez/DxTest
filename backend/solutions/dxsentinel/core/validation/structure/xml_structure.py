@@ -1,4 +1,8 @@
-"""Validaciones de estructura XML → FATAL."""
+"""Validacion de estructura del modelo XML → FATAL.
+
+Integra las verificaciones que antes se hacian implicitamente en
+xml_parser.py y element_processor.py como excepciones no estructuradas.
+"""
 
 from __future__ import annotations
 
@@ -6,16 +10,16 @@ import re
 
 from ..registry import register_validator
 from ..result import Severity, ValidationResult
-from .base import BaseValidator, ValidationContext
+from ..base import BaseValidator, ValidationContext
 
 _VALID_ID_PATTERN = re.compile(r"^[a-zA-Z0-9_\-.:]+$")
 
 
 @register_validator
-class StructureValidator(BaseValidator):
-    """Verifica la integridad estructural del modelo parseado.
+class XMLStructureValidator(BaseValidator):
+    """Verifica integridad estructural del modelo parseado.
 
-    Cualquier fallo aqui es FATAL porque indica que el XML no puede
+    Cualquier fallo aqui es FATAL: indica que el XML no puede
     procesarse de forma confiable.
     """
 
@@ -27,9 +31,9 @@ class StructureValidator(BaseValidator):
 
         self._check_root(structure, issues)
         self._check_elements_exist(elements, issues)
+        self._check_element_ids_valid(elements, issues)
         self._check_duplicate_elements(elements, issues)
         self._check_business_keys(elements, ctx.field_catalog, issues)
-        self._check_element_ids_valid(elements, issues)
 
         return issues
 
@@ -60,6 +64,18 @@ class StructureValidator(BaseValidator):
                 validator=self.name,
             ))
 
+    def _check_element_ids_valid(self, elements: list[dict], issues: list[ValidationResult]) -> None:
+        for elem in elements:
+            elem_id = elem.get("element_id", "")
+            if elem_id and not _VALID_ID_PATTERN.match(elem_id):
+                issues.append(ValidationResult(
+                    severity=Severity.FATAL,
+                    code="STRUCT_004",
+                    message=f"Element ID contiene caracteres invalidos: '{elem_id}'",
+                    element_id=elem_id,
+                    validator=self.name,
+                ))
+
     def _check_duplicate_elements(self, elements: list[dict], issues: list[ValidationResult]) -> None:
         seen: dict[str, int] = {}
         for elem in elements:
@@ -72,7 +88,7 @@ class StructureValidator(BaseValidator):
             if count > 1:
                 issues.append(ValidationResult(
                     severity=Severity.FATAL,
-                    code="STRUCT_004",
+                    code="STRUCT_005",
                     message=f"Elemento duplicado '{key}' aparece {count} veces",
                     element_id=key,
                     validator=self.name,
@@ -94,30 +110,16 @@ class StructureValidator(BaseValidator):
             field_ids = {f.get("field_id", "") for f in elem.get("fields", [])}
 
             for tpl_key in template_keys:
-                # Resolver: "personInfo.person-id-external" -> "person-id-external"
                 resolved = tpl_key.split(".")[-1] if "." in tpl_key else tpl_key
 
                 if resolved not in field_ids:
-                    # Verificar si esta en el catalogo como campo del CSV
                     full_id = f"{elem_id}_{resolved}"
                     if full_id not in field_catalog:
                         issues.append(ValidationResult(
                             severity=Severity.FATAL,
-                            code="STRUCT_005",
+                            code="STRUCT_006",
                             message=f"Business key '{resolved}' faltante en entidad '{elem_id}'",
                             element_id=elem_id,
                             field_id=resolved,
                             validator=self.name,
                         ))
-
-    def _check_element_ids_valid(self, elements: list[dict], issues: list[ValidationResult]) -> None:
-        for elem in elements:
-            elem_id = elem.get("element_id", "")
-            if elem_id and not _VALID_ID_PATTERN.match(elem_id):
-                issues.append(ValidationResult(
-                    severity=Severity.FATAL,
-                    code="STRUCT_006",
-                    message=f"Element ID '{elem_id}' contiene caracteres invalidos",
-                    element_id=elem_id,
-                    validator=self.name,
-                ))

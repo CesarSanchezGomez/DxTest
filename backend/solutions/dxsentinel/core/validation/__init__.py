@@ -1,5 +1,11 @@
 """Sistema de validacion de DxSentinel.
 
+Estructura:
+    validation/
+        structure/      → FATAL (xml_structure, character, upload)
+        content/        → ERROR/WARNING (field_rules, field_filter, label, format_group)
+        country/        → ERROR por pais (mx, ...)
+
 Uso:
     from .validation import validate, ValidationEngine, ValidationContext
     from .validation.result import Severity, ValidationReport
@@ -7,7 +13,7 @@ Uso:
 
 from .engine import ValidationEngine
 from .result import Severity, ValidationReport, ValidationResult
-from .validators.base import ValidationContext
+from .base import ValidationContext
 
 __all__ = [
     "ValidationEngine",
@@ -27,6 +33,8 @@ def validate(
     target_countries: list[str] | None = None,
     format_groups: dict | None = None,
     language_code: str = "en-us",
+    upload_filename: str | None = None,
+    upload_size_bytes: int | None = None,
 ) -> ValidationReport:
     """Atajo para ejecutar todas las validaciones."""
     ctx = ValidationContext(
@@ -37,5 +45,7 @@ def validate(
         target_countries=target_countries,
         format_groups=format_groups or {},
         language_code=language_code,
+        upload_filename=upload_filename,
+        upload_size_bytes=upload_size_bytes,
     )
     return ValidationEngine().validate(ctx)

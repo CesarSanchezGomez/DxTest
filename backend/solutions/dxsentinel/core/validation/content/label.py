@@ -1,24 +1,39 @@
-"""Validaciones de labels → WARNING."""
+"""Validacion de labels multilingues → WARNING.
+
+Integra la logica de validacion de idiomas que existia en
+xml_parser.py (_extract_labels, LANGUAGE_PATTERN) y la extiende
+con verificaciones de calidad (duplicados, encoding).
+"""
 
 from __future__ import annotations
 
+import re
+
 from ..registry import register_validator
 from ..result import Severity, ValidationResult
-from .base import BaseValidator, ValidationContext
+from ..base import BaseValidator, ValidationContext
+
+# Patron de idiomas validos (del xml_parser.py original)
+_LANGUAGE_PATTERN = re.compile(r"^[a-z]{2}(-[A-Za-z]{2,})?$")
+
+# Caracteres de encoding problematicos
+_ENCODING_ISSUES = re.compile(r"[\ufffd\ufffe\ufeff]")
+
+# Caracteres de control (excepto tab/newline/carriage return)
+_CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 
 @register_validator
 class LabelValidator(BaseValidator):
-    """Verifica calidad de labels multilingues.
-
-    Los fallos aqui son WARNING: el proceso continua normalmente.
-    """
+    """Verifica calidad de labels multilingues → WARNING."""
 
     def validate(self, ctx: ValidationContext) -> list[ValidationResult]:
         issues: list[ValidationResult] = []
 
         self._check_missing_labels(ctx.columns, ctx.language_code, issues)
+        self._check_label_quality(ctx.columns, issues)
         self._check_duplicate_labels(ctx.columns, ctx.language_code, issues)
+        self._check_language_codes(ctx.parsed_model, issues)
 
         return issues
 
@@ -26,6 +41,7 @@ class LabelValidator(BaseValidator):
         self, columns: list[dict], language_code: str, issues: list[ValidationResult],
     ) -> None:
         lang_normalized = language_code.lower().replace("_", "-")
+        base_lang = lang_normalized.split("-")[0]
 
         for col in columns:
             node = col.get("node", {})
@@ -45,14 +61,11 @@ class LabelValidator(BaseValidator):
                 ))
                 continue
 
-            # Verificar idioma solicitado (o base)
-            has_lang = False
-            base_lang = lang_normalized.split("-")[0]
-            for lang_key in labels:
-                lk = lang_key.lower().replace("_", "-")
-                if lk == lang_normalized or lk.startswith(base_lang):
-                    has_lang = True
-                    break
+            has_lang = any(
+                lk.lower().replace("_", "-") == lang_normalized
+                or lk.lower().replace("_", "-").startswith(base_lang)
+                for lk in labels
+            )
 
             if not has_lang and "default" not in labels:
                 issues.append(ValidationResult(
@@ -64,13 +77,42 @@ class LabelValidator(BaseValidator):
                     validator=self.name,
                 ))
 
-            # Labels vacios
+    def _check_label_quality(self, columns: list[dict], issues: list[ValidationResult]) -> None:
+        for col in columns:
+            node = col.get("node", {})
+            labels = node.get("labels", {}) if isinstance(node, dict) else {}
+            element_id = col.get("element_id", "")
+            field_id = col.get("field_id", "")
+
             for lang_key, label_text in labels.items():
-                if isinstance(label_text, str) and not label_text.strip():
+                if not isinstance(label_text, str):
+                    continue
+
+                if not label_text.strip():
                     issues.append(ValidationResult(
                         severity=Severity.WARNING,
                         code="LABEL_003",
-                        message=f"Label vacio para idioma '{lang_key}': {full_id}",
+                        message=f"Label vacio para idioma '{lang_key}': {col.get('full_id', '')}",
+                        element_id=element_id,
+                        field_id=field_id,
+                        validator=self.name,
+                    ))
+
+                if _CONTROL_CHARS.search(label_text):
+                    issues.append(ValidationResult(
+                        severity=Severity.WARNING,
+                        code="LABEL_004",
+                        message=f"Caracteres de control en label ({lang_key}): '{label_text[:50]}'",
+                        element_id=element_id,
+                        field_id=field_id,
+                        validator=self.name,
+                    ))
+
+                if _ENCODING_ISSUES.search(label_text):
+                    issues.append(ValidationResult(
+                        severity=Severity.WARNING,
+                        code="LABEL_005",
+                        message=f"Problemas de encoding en label ({lang_key}): '{label_text[:50]}'",
                         element_id=element_id,
                         field_id=field_id,
                         validator=self.name,
@@ -79,10 +121,10 @@ class LabelValidator(BaseValidator):
     def _check_duplicate_labels(
         self, columns: list[dict], language_code: str, issues: list[ValidationResult],
     ) -> None:
-        # Agrupar por elemento
-        by_element: dict[str, list[tuple[str, str]]] = {}
         lang_normalized = language_code.lower().replace("_", "-")
         base_lang = lang_normalized.split("-")[0]
+
+        by_element: dict[str, list[tuple[str, str]]] = {}
 
         for col in columns:
             element_id = col.get("element_id", "")
@@ -108,7 +150,7 @@ class LabelValidator(BaseValidator):
                 if label_lower in seen:
                     issues.append(ValidationResult(
                         severity=Severity.WARNING,
-                        code="LABEL_004",
+                        code="LABEL_006",
                         message=(
                             f"Label duplicado '{label}' en '{element_id}': "
                             f"campos {seen[label_lower]} y {full_id}"
@@ -119,3 +161,27 @@ class LabelValidator(BaseValidator):
                     ))
                 else:
                     seen[label_lower] = full_id
+
+    def _check_language_codes(self, parsed_model: dict, issues: list[ValidationResult]) -> None:
+        """Verifica que los language codes del XML cumplan el patron valido."""
+        structure = parsed_model.get("structure", {})
+        if not structure:
+            return
+
+        invalid_langs = set()
+        self._collect_invalid_langs(structure, invalid_langs)
+
+        for lang in sorted(invalid_langs):
+            issues.append(ValidationResult(
+                severity=Severity.WARNING,
+                code="LABEL_007",
+                message=f"Language code invalido en XML: '{lang}' (esperado: xx o xx-XX)",
+                validator=self.name,
+            ))
+
+    def _collect_invalid_langs(self, node: dict, invalid: set) -> None:
+        for lang_key in node.get("labels", {}):
+            if lang_key != "default" and not _LANGUAGE_PATTERN.match(lang_key):
+                invalid.add(lang_key)
+        for child in node.get("children", []):
+            self._collect_invalid_langs(child, invalid)

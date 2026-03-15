@@ -3,33 +3,47 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from .registry import get_registered_validators
 from .result import Severity, ValidationReport, ValidationResult
-from .validators.base import BaseValidator, ValidationContext
+from .base import BaseValidator, ValidationContext
 
 logger = logging.getLogger(__name__)
 
 # Orden de ejecucion: estructura primero (short-circuit si FATAL)
 _PHASE_ORDER = [
-    "StructureValidator",
-    "CharacterValidator",
-    "ContentValidator",
+    # structure/
+    "UploadValidator",
+    "XMLStructureValidator",
+    "CharacterStructureValidator",
+    # content/
+    "FieldRulesValidator",
+    "FieldFilterValidator",
+    "FormatGroupValidator",
     "LabelValidator",
-    # Country validators se ejecutan al final
+    # country/ validators se ejecutan al final automaticamente
 ]
+
+# Validators que producen short-circuit en FATAL
+_SHORT_CIRCUIT_ON_FATAL = {
+    "UploadValidator",
+    "XMLStructureValidator",
+    "CharacterStructureValidator",
+}
 
 
 class ValidationEngine:
     """Ejecuta validadores registrados y recopila resultados.
 
     Flujo:
-    1. Structure → si hay FATAL, short-circuit (no ejecuta el resto).
-    2. Character → FATAL en IDs detiene, WARNING en labels continua.
-    3. Content → ERROR.
-    4. Label → WARNING.
-    5. Country validators → filtrados por target_countries.
+    1. Upload → si hay FATAL (archivo invalido), short-circuit.
+    2. XMLStructure → si hay FATAL (modelo roto), short-circuit.
+    3. CharacterStructure → FATAL en IDs detiene.
+    4. FieldRules → ERROR en coherencia de tipos/visibility.
+    5. FieldFilter → WARNING por campos excluidos.
+    6. FormatGroup → ERROR/WARNING en format groups.
+    7. Label → WARNING en labels.
+    8. Country validators → filtrados por target_countries.
     """
 
     def validate(self, ctx: ValidationContext) -> ValidationReport:
@@ -49,8 +63,7 @@ class ValidationEngine:
                     validator=validator.name,
                 ))
 
-            # Short-circuit: si estructura o caracteres producen FATAL, parar
-            if report.has_fatal and validator.name in ("StructureValidator", "CharacterValidator"):
+            if report.has_fatal and validator.name in _SHORT_CIRCUIT_ON_FATAL:
                 logger.warning(
                     "Short-circuit: %s produjo FATAL, deteniendo validacion",
                     validator.name,
@@ -68,8 +81,7 @@ class ValidationEngine:
         for cls in registered:
             instance = cls()
             name = instance.name
-            # Detectar country validators por herencia
-            from .validators.country.base import CountryValidator
+            from .country.base import CountryValidator
             if isinstance(instance, CountryValidator):
                 country_validators.append(instance)
             else:
@@ -77,7 +89,6 @@ class ValidationEngine:
 
         ordered: list[BaseValidator] = []
 
-        # Fases en orden definido
         for name in _PHASE_ORDER:
             if name in by_name:
                 ordered.append(by_name.pop(name))

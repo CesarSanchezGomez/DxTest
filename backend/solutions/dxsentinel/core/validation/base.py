@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Optional
 
-from ..result import ValidationResult
+from .result import ValidationResult
 
 
 @dataclass
@@ -37,6 +37,12 @@ class ValidationContext:
 
     language_code: str = "en-us"
     """Idioma solicitado para labels."""
+
+    upload_filename: Optional[str] = None
+    """Nombre del archivo subido (para validaciones de upload)."""
+
+    upload_size_bytes: Optional[int] = None
+    """Tamano del archivo subido en bytes."""
 
 
 class BaseValidator(ABC):

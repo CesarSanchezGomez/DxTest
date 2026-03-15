@@ -1,19 +1,19 @@
-"""Validaciones de contenido de campos → ERROR."""
+"""Validacion de coherencia de campos → ERROR.
+
+Verifica que los campos del field_catalog tengan tipos, visibility
+y configuracion consistente.
+"""
 
 from __future__ import annotations
 
 from ..registry import register_validator
 from ..result import Severity, ValidationResult
-from .base import BaseValidator, ValidationContext
+from ..base import BaseValidator, ValidationContext
 
 
 @register_validator
-class ContentValidator(BaseValidator):
-    """Verifica coherencia de contenido en campos y atributos.
-
-    Los fallos aqui son ERROR: el golden record se genera pero no se
-    permite hacer split hasta corregir.
-    """
+class FieldRulesValidator(BaseValidator):
+    """Verifica coherencia de reglas de campos → ERROR."""
 
     def validate(self, ctx: ValidationContext) -> list[ValidationResult]:
         issues: list[ValidationResult] = []
@@ -37,7 +37,7 @@ class ContentValidator(BaseValidator):
             if expected_type and declared_type != expected_type:
                 issues.append(ValidationResult(
                     severity=Severity.ERROR,
-                    code="CONTENT_001",
+                    code="FIELD_001",
                     message=(
                         f"Tipo declarado '{declared_type}' no coincide con esperado "
                         f"'{expected_type}' para {full_id}"
@@ -52,7 +52,7 @@ class ContentValidator(BaseValidator):
             if entry.get("required") and entry.get("visibility") == "none":
                 issues.append(ValidationResult(
                     severity=Severity.ERROR,
-                    code="CONTENT_002",
+                    code="FIELD_002",
                     message=f"Campo required con visibility='none': {full_id}",
                     element_id=entry.get("element"),
                     field_id=entry.get("field"),
@@ -64,7 +64,7 @@ class ContentValidator(BaseValidator):
             if entry.get("data_type") == "picklist" and not entry.get("picklist_id"):
                 issues.append(ValidationResult(
                     severity=Severity.ERROR,
-                    code="CONTENT_003",
+                    code="FIELD_003",
                     message=f"Campo tipo picklist sin picklist_id: {full_id}",
                     element_id=entry.get("element"),
                     field_id=entry.get("field"),
@@ -76,7 +76,7 @@ class ContentValidator(BaseValidator):
             if elem.get("field_count", 0) == 0:
                 issues.append(ValidationResult(
                     severity=Severity.ERROR,
-                    code="CONTENT_004",
+                    code="FIELD_004",
                     message=f"Entidad '{elem.get('element_id')}' procesada sin campos",
                     element_id=elem.get("element_id"),
                     validator=self.name,
