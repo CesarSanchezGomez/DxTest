@@ -1,7 +1,7 @@
 from typing import Dict, Tuple, Optional, Set
 import re
 
-from ...constants import EXCLUDED_FIELD_IDS, EXCLUDED_CUSTOM_RANGES
+from ...constants import EXCLUDED_FIELD_IDS, EXCLUDED_CUSTOM_RANGES, SAP_ENTITY_CONFIGS
 from .exceptions import FieldFilterError
 
 
@@ -26,12 +26,27 @@ class FieldFilter:
                 self.excluded_patterns.append(re.compile(pattern_str, re.IGNORECASE))
 
         self._generated_excluded_custom_fields = self._generate_custom_exclusions()
+        self._business_key_fields = self._build_business_key_fields()
+
+    @staticmethod
+    def _build_business_key_fields() -> Set[str]:
+        """Construye set de field_ids que son business keys (nunca deben filtrarse)."""
+        bk_fields: Set[str] = set()
+        for config in SAP_ENTITY_CONFIGS.values():
+            for tpl_key in config.get("template", []):
+                resolved = tpl_key.split(".")[-1] if "." in tpl_key else tpl_key
+                bk_fields.add(resolved)
+        return bk_fields
 
     def filter_field(self, field_node: Dict) -> Tuple[bool, Optional[str]]:
         """Determina si un campo debe incluirse en el Golden Record."""
         try:
             attributes = field_node.get("attributes", {}).get("raw", {})
             field_id = field_node.get("technical_id") or field_node.get("id", "")
+
+            # Business keys nunca se filtran (son estructurales)
+            if field_id in self._business_key_fields:
+                return True, None
 
             visibility = attributes.get("visibility", "").lower()
             if visibility == "none":
