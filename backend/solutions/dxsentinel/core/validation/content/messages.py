@@ -89,21 +89,20 @@ class ContentMessages:
         return f"La {field_name} no coincide con la CURP"
 
     @staticmethod
-    def curp_gender_mismatch(language_label: str, picklist: list) -> str:
-        picklist_str = ", ".join(picklist)
+    def curp_gender_mismatch(valid_values: list) -> str:
+        values_str = ", ".join(valid_values)
         return (
             f"Género no coincide con CURP. "
-            f"Formato de idioma: {language_label}. "
-            f"Valores esperados del género: {picklist_str}"
+            f"SAP usa valores system-defined: {values_str} (M=Male→H, F=Female→M en CURP)"
         )
 
     @staticmethod
-    def curp_gender_invalid_value(language_label: str, picklist: list) -> str:
-        picklist_str = ", ".join(picklist)
+    def curp_gender_invalid_value(valid_values: list) -> str:
+        values_str = ", ".join(valid_values)
         return (
-            f"El valor del género no pertenece a ningún valor de la picklist. "
-            f"Formato de idioma: {language_label}. "
-            f"Valores aceptados: {picklist_str}"
+            f"El valor del género no es válido. "
+            f"SAP usa valores system-defined: {values_str} (Male/Female). "
+            f"No configurar como picklist."
         )
 
     @staticmethod

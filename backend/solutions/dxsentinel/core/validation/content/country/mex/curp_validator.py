@@ -54,17 +54,13 @@ class CURPValidator:
         "Zacatecas",
     })
 
-    GENDER_MAP_ES: Dict[str, str] = {
-        "H": "H",
-        "M": "M",
+    # SAP SuccessFactors always uses M (Male) / F (Female) — system-defined,
+    # not a picklist, not language-dependent.  We map to CURP codes: M→H, F→M.
+    SAP_GENDER_TO_CURP: Dict[str, str] = {
+        "M": "H",   # Male  → Hombre
+        "F": "M",   # Female → Mujer
     }
-    GENDER_MAP_EN: Dict[str, str] = {
-        "M": "H",
-        "F": "M",
-    }
-
-    GENDER_PICKLIST_ES: List[str] = ["H", "M"]
-    GENDER_PICKLIST_EN: List[str] = ["M", "F"]
+    SAP_GENDER_VALUES: List[str] = ["M", "F"]
 
     STATE_TABLE: Dict[str, str] = {
         "AGUASCALIENTES": "AS",
@@ -163,15 +159,6 @@ class CURPValidator:
 
     def __init__(self, country_codes: List[str], language_code: str = ""):
         self.active = self.TARGET_COUNTRY in [c.upper() for c in (country_codes or [])]
-        lang = (language_code or "").strip().lower()
-        if lang.startswith("en"):
-            self.gender_map = self.GENDER_MAP_EN
-            self.gender_picklist = self.GENDER_PICKLIST_EN
-            self.language_label = "en-US"
-        else:
-            self.gender_map = self.GENDER_MAP_ES
-            self.gender_picklist = self.GENDER_PICKLIST_ES
-            self.language_label = "es-MX"
 
     def is_active(self) -> bool:
         return self.active
@@ -280,20 +267,20 @@ class CURPValidator:
             ))
 
         gender_key = gender.upper()
-        if gender_key not in self.gender_map:
+        if gender_key not in self.SAP_GENDER_TO_CURP:
             errors.append(self._err(
                 "CURP_GENDER_INVALID_VALUE",
-                ContentMessages.curp_gender_invalid_value(self.language_label, self.gender_picklist),
+                ContentMessages.curp_gender_invalid_value(self.SAP_GENDER_VALUES),
                 context,
                 field_id="gender",
                 value=gender,
             ))
         else:
-            curp_gender_code = self.gender_map[gender_key]
+            curp_gender_code = self.SAP_GENDER_TO_CURP[gender_key]
             if curp_gender_code != curp_upper[10]:
                 errors.append(self._err(
                     "CURP_GENDER_MISMATCH",
-                    ContentMessages.curp_gender_mismatch(self.language_label, self.gender_picklist),
+                    ContentMessages.curp_gender_mismatch(self.SAP_GENDER_VALUES),
                     context,
                     field_id="gender",
                     value=curp,
