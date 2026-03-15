@@ -19,9 +19,6 @@ Tablas requeridas en Supabase (SQL):
         country_codes TEXT[],
         csv_storage_path TEXT,
         metadata_storage_path TEXT,
-        report_storage_path TEXT,
-        zip_storage_path TEXT,
-        field_count INTEGER DEFAULT 0,
         created_at TIMESTAMPTZ DEFAULT now()
     );
 
@@ -130,23 +127,13 @@ class SupabaseDBRepository:
         version_id: str,
         csv_storage_path: str,
         metadata_storage_path: str,
-        report_storage_path: Optional[str] = None,
-        zip_storage_path: Optional[str] = None,
-        field_count: int = 0,
     ) -> Dict:
-        payload: Dict = {
-            "csv_storage_path": csv_storage_path,
-            "metadata_storage_path": metadata_storage_path,
-            "field_count": field_count,
-        }
-        if report_storage_path:
-            payload["report_storage_path"] = report_storage_path
-        if zip_storage_path:
-            payload["zip_storage_path"] = zip_storage_path
-
         result = (
             self._client.table("versions")
-            .update(payload)
+            .update({
+                "csv_storage_path": csv_storage_path,
+                "metadata_storage_path": metadata_storage_path,
+            })
             .eq("id", version_id)
             .execute()
         )
@@ -182,9 +169,6 @@ class SupabaseDBRepository:
                 "country_codes": row["country_codes"],
                 "csv_storage_path": row.get("csv_storage_path"),
                 "metadata_storage_path": row.get("metadata_storage_path"),
-                "report_storage_path": row.get("report_storage_path"),
-                "zip_storage_path": row.get("zip_storage_path"),
-                "field_count": row.get("field_count", 0),
                 "created_at": row["created_at"],
                 "instance_number": project.get("instance_number"),
                 "client_name": project.get("client_name"),

@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var opt = document.createElement('option');
                 opt.value = i;
                 var countries = v.country_codes ? ' [' + v.country_codes.join(', ') + ']' : '';
-                opt.textContent = 'v' + v.version_number + ' - ' + v.language_code + countries + ' (' + (v.field_count || 0) + ' campos)';
+                opt.textContent = 'v' + v.version_number + ' - ' + v.language_code + countries;
                 versionSelect.appendChild(opt);
             });
 

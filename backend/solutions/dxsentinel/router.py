@@ -97,7 +97,7 @@ async def process_files(request: ProcessRequest, user=Depends(get_current_user))
     consultant_email = user.email
 
     try:
-        # 1. Crear proyecto + version en Supabase
+        # 1. Crear proyecto + version en Supabase DB
         project, version, version_number = _project_service.create_version(
             consultant_email=consultant_email,
             instance_number=request.instance_number,
@@ -106,7 +106,7 @@ async def process_files(request: ProcessRequest, user=Depends(get_current_user))
             country_codes=request.country_codes,
         )
 
-        # 2. Procesar archivos
+        # 2. Procesar archivos (genera outputs localmente)
         result = ProcessingService.process(
             main_file_path=main_path,
             csf_file_path=csf_path,
@@ -115,14 +115,15 @@ async def process_files(request: ProcessRequest, user=Depends(get_current_user))
             excluded_entities=request.excluded_entities,
         )
 
-        # 3. Actualizar version con paths de archivos
-        _project_service.update_version_paths(
-            version_id=version["id"],
-            csv_path=result["output_file"],
-            metadata_path=result["metadata_file"],
-            report_path=result.get("report_file"),
-            zip_path=result.get("zip_file"),
-            field_count=result["field_count"],
+        # 3. Subir outputs a Supabase Storage y guardar paths en DB
+        from pathlib import Path as _Path
+        _project_service.store_outputs(
+            version=version,
+            project=project,
+            consultant_email=consultant_email,
+            csv_path=_Path(result["output_file"]),
+            metadata_path=_Path(result["metadata_file"]),
+            report_path=_Path(result["report_file"]) if result.get("report_file") else None,
         )
 
         return ProcessResponse(
@@ -203,21 +204,20 @@ async def split_process(request: SplitRequest, user=Depends(get_current_user)):
     if project.get("consultant_email") != user.email:
         raise HTTPException(status_code=403, detail="No autorizado")
 
-    metadata_path = version.get("metadata_storage_path")
-    if not metadata_path:
+    metadata_storage_path = version.get("metadata_storage_path")
+    if not metadata_storage_path:
         raise HTTPException(status_code=400, detail="Version sin metadata generada")
-
-    from pathlib import Path as _Path
-    if not _Path(metadata_path).exists():
-        raise HTTPException(status_code=404, detail="Archivo metadata no encontrado en disco")
 
     # CSV subido por el usuario (golden record lleno)
     csv_path = FileService.get_path(request.csv_file_id)
     if not csv_path:
         raise HTTPException(status_code=404, detail="Archivo CSV no encontrado. Sube el golden record lleno primero.")
 
+    # Descargar metadata desde Supabase Storage a temporal
+    temp_metadata = None
     try:
-        result = SplitService.split(csv_path, _Path(metadata_path))
+        temp_metadata = _project_service.download_metadata_to_temp(metadata_storage_path)
+        result = SplitService.split(csv_path, temp_metadata)
         return SplitResponse(
             success=True,
             message="Split completado",
@@ -227,6 +227,9 @@ async def split_process(request: SplitRequest, user=Depends(get_current_user)):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error en split: {str(e)}")
+    finally:
+        if temp_metadata and temp_metadata.exists():
+            temp_metadata.unlink(missing_ok=True)
 
 
 @router.get("/split/download/{download_id}")
