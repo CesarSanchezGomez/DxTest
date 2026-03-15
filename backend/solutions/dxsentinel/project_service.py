@@ -58,7 +58,6 @@ class ProjectService:
         consultant_email: str,
         csv_path: Path,
         metadata_path: Path,
-        report_path: Optional[Path] = None,
     ) -> Dict:
         """Sube CSV y metadata a Supabase Storage y actualiza paths en DB."""
         prefix = _build_storage_prefix(
@@ -73,13 +72,6 @@ class ProjectService:
 
         self._storage.upload_from_local(csv_storage_path, csv_path, content_type="text/csv")
         self._storage.upload_from_local(metadata_storage_path, metadata_path, content_type="application/json")
-
-        if report_path and report_path.exists():
-            report_storage_path = f"{prefix}/outputs/{report_path.name}"
-            self._storage.upload_from_local(
-                report_storage_path, report_path,
-                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            )
 
         self._db.update_version_paths(
             version_id=version["id"],

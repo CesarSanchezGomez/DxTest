@@ -123,7 +123,6 @@ async def process_files(request: ProcessRequest, user=Depends(get_current_user))
             consultant_email=consultant_email,
             csv_path=_Path(result["output_file"]),
             metadata_path=_Path(result["metadata_file"]),
-            report_path=_Path(result["report_file"]) if result.get("report_file") else None,
         )
 
         # 4. Limpiar archivos locales (ya estan en Supabase Storage)
