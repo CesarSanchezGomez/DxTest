@@ -57,23 +57,11 @@ INJECTED_FIELD_LABELS: dict[str, dict[str, str]] = {
         "es-mx": "Motivo del Evento",
         "en-us": "Event Reason",
     },
-    "address-type": {
-        "default": "Address Type",
-        "en-debug": "Address Type",
-        "es-mx": "Tipo de Dirección",
-        "en-us": "Address Type",
-    },
     "user-id": {
         "default": "User ID",
         "en-debug": "User ID",
         "es-mx": "ID de Usuario",
         "en-us": "User ID",
-    },
-    "email-address": {
-        "default": "Email Address",
-        "en-debug": "Email Address",
-        "es-mx": "Correo Electronico",
-        "en-us": "Email Address",
     },
 }
 
@@ -217,7 +205,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "business_keys": ["personIdExternal", "effectiveStartDate", "addressType"],
         "template": ["personInfo.person-id-external", "start-date", "address-type"],
         "references": "personInfo",
-        "inject": ["start-date", "address-type"],
+        "inject": ["start-date"],
         "field_types": {
             "DATE": ["end-date"],
             "LONG": ["attachment-id", "item-id"],

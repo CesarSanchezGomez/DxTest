@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Set
 import logging
 
-from ...constants import ELEMENT_ORDER, get_injected_field_labels
+from ...constants import ELEMENT_ORDER
 from .field_filter import FieldFilter
 from .field_finder import GoldenRecordFieldFinder
 from .exceptions import ElementNotFoundError
@@ -105,13 +105,17 @@ class ElementProcessor:
                 if processed["field_count"] > 0:
                     all_elements_list.append(processed)
 
-            # Inyectar campos obligatorios de entidades excluidas
-            for entity_id, forced_fields in self._forced_fields.items():
+            # Extraer campos obligatorios de entidades excluidas (del XML real)
+            for entity_id, forced_field_ids in self._forced_fields.items():
                 if entity_id not in self.excluded_entities:
                     continue
-                forced_element = self._build_forced_element(entity_id, forced_fields)
-                if forced_element["field_count"] > 0:
-                    all_elements_list.append(forced_element)
+                if entity_id in global_elements_dict:
+                    forced = self._process_element_forced(
+                        global_elements_dict[entity_id]["node"],
+                        entity_id, set(forced_field_ids),
+                    )
+                    if forced["field_count"] > 0:
+                        all_elements_list.append(forced)
 
             format_groups_by_country = {}
             for country_node in filtered_country_nodes:
@@ -249,36 +253,38 @@ class ElementProcessor:
             "reg_ex": reg_ex,
         }
 
-    def _build_forced_element(self, entity_id: str, field_ids: List[str]) -> Dict:
-        """Construye un elemento sintético con campos obligatorios."""
-        fields = []
-        for field_id in field_ids:
-            full_field_id = f"{entity_id}_{field_id}"
+    def _process_element_forced(
+        self, element_node: Dict, element_id: str, forced_field_ids: Set[str],
+    ) -> Dict:
+        """Procesa un elemento del XML real pero solo incluye campos forzados."""
+        all_fields = GoldenRecordFieldFinder.find_all_fields(element_node, include_nested=True)
+        element_fields = []
+
+        for field_node in all_fields:
+            field_id = field_node.get("technical_id") or field_node.get("id", "")
+            if not field_id or field_id not in forced_field_ids:
+                continue
+
+            full_field_id = f"{element_id}_{field_id}"
             if full_field_id in self.global_field_ids:
                 continue
+
             self.global_field_ids.add(full_field_id)
-            labels = get_injected_field_labels(field_id)
-            synthetic_node = {
-                "tag": "hris-field",
-                "technical_id": field_id,
-                "attributes": {"raw": {"id": field_id, "visibility": "both", "required": "false"}},
-                "labels": labels,
-                "children": [],
-            }
-            fields.append({
+            element_fields.append({
                 "field_id": field_id,
                 "full_field_id": full_field_id,
-                "node": synthetic_node,
+                "node": field_node,
                 "origin": "forced",
                 "is_country_specific": False,
                 "country_code": None,
                 "is_business_key": False,
             })
+
         return {
-            "element_id": entity_id,
+            "element_id": element_id,
             "origin": "forced",
-            "fields": fields,
+            "fields": element_fields,
             "is_country_specific": False,
             "country_code": None,
-            "field_count": len(fields),
+            "field_count": len(element_fields),
         }
