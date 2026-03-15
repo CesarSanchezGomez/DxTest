@@ -5,8 +5,6 @@ import logging
 from pathlib import Path
 
 from ...constants import ELEMENT_ORDER
-from ...validation import validate as run_validation
-from ...validation.result import Severity, ValidationReport
 from .element_processor import ElementProcessor
 from .language_resolver import GoldenRecordLanguageResolver
 from .exceptions import GoldenRecordError
@@ -84,26 +82,6 @@ class CSVGenerator:
         translated_labels = self._get_translated_labels(column_metadata, language_code, has_multiple_countries)
 
         metadata = self.metadata_gen.generate_metadata(processed_data, columns)
-
-        # ── Validacion ───────────────────────────────────────────────────
-        validation_report = run_validation(
-            parsed_model=parsed_model,
-            processed_data=processed_data,
-            columns=columns,
-            field_catalog=metadata.get("field_catalog", {}),
-            target_countries=self.target_countries,
-            format_groups=processed_data.get("format_groups", {}),
-            language_code=language_code,
-        )
-
-        if validation_report.has_fatal:
-            fatal_messages = "; ".join(
-                r.message for r in validation_report.by_severity(Severity.FATAL)
-            )
-            raise GoldenRecordError(f"Errores fatales de validacion: {fatal_messages}")
-
-        metadata["validation"] = validation_report.to_dict()
-        # ─────────────────────────────────────────────────────────────────
 
         with open(output_path, "w", newline="", encoding="utf-8-sig") as csvfile:
             writer = csv.writer(csvfile)
