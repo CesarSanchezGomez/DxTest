@@ -7,6 +7,7 @@ class BusinessKeyResolver:
     SPECIAL_KEY_MAPPINGS = {
         "person-id-external": "personInfo_person-id-external",
         "personInfo.person-id-external": "personInfo_person-id-external",
+        "user-id": "personInfo_person-id-external",
     }
 
     COMMON_KEYS = {
