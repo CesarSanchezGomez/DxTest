@@ -234,14 +234,10 @@ class CURPValidator(BaseValidator):
             ))
             return errors
 
-        # Validar formato de fecha
-        date_match = re.match(r"^(\d{2})/(\d{2})/(\d{4})$", date_of_birth)
+        # Extraer componentes de fecha (formato ya validado por TypeValidator)
+        date_match = re.match(r"^(\d{1,2})/(\d{1,2})/(\d{4})$", date_of_birth)
         if not date_match:
-            errors.append(self._emit(
-                Severity.ERROR, "CURP_INVALID_DATE_FORMAT",
-                element_id="nationalIdCard", field_id="date-of-birth",
-                row_index=row_index, person_id=person_id, value=date_of_birth,
-            ))
+            # Formato invalido → TypeValidator ya lo reporta bajo personInfo
             return errors
 
         if errors:
@@ -264,8 +260,10 @@ class CURPValidator(BaseValidator):
                 row_index=row_index, person_id=person_id, value=curp,
             ))
 
-        # Validar fecha en CURP
-        day, month, year = date_match.group(1), date_match.group(2), date_match.group(3)
+        # Validar fecha en CURP (pad a 2 digitos por si el CSV usa d/m/yyyy)
+        day = date_match.group(1).zfill(2)
+        month = date_match.group(2).zfill(2)
+        year = date_match.group(3)
         if year[2:] + month + day != curp_upper[4:10]:
             errors.append(self._emit(
                 Severity.ERROR, "CURP_DATE_MISMATCH",
