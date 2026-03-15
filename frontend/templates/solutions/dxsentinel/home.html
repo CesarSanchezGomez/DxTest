@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}DxSentinel - Inicio{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h3>DxSentinel</h3>
+    <p>Herramientas para SAP SuccessFactors Employee Central</p>
+</div>
+
+<div class="cards-grid">
+    <div class="card">
+        <div class="card-header"><h3>Golden Record</h3></div>
+        <div class="card-body">
+            <p>Genera el Golden Record template a partir de archivos SDM y CSF.</p>
+            <p>Incluye CSV, Metadata JSON y Field Report XLSX.</p>
+            <div class="card-actions">
+                <a href="/dxsentinel/upload" class="btn btn-primary">Abrir Golden Record</a>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3>Split</h3></div>
+        <div class="card-body">
+            <p>Divide archivos de datos por entidades para procesamiento independiente.</p>
+            <p style="color: var(--color-gray-dark); font-size: 13px;">Proximamente</p>
+            <div class="card-actions">
+                <button class="btn btn-secondary" disabled>Proximamente</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
