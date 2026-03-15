@@ -7,5 +7,6 @@ register_solution({
     "icon": "solutions/dxsentinel.png",
     "pages": [
         {"name": "Golden Record", "path": "upload"},
+        {"name": "Split", "path": "split"},
     ],
 })

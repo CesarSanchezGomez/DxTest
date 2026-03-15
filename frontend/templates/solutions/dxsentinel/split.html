@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}DxSentinel - Split{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/solutions/dxmodels/forms.css">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h3>Split Golden Record</h3>
+    <p>Divide el Golden Record en layouts individuales por entidad SAP</p>
+</div>
+
+<div class="cards-stack">
+    <div class="card">
+        <div class="card-header">
+            <h3>Archivos de Entrada</h3>
+        </div>
+        <div class="card-body">
+            <form id="splitForm">
+                <div class="form-group">
+                    <label for="csvFile">Golden Record (CSV):</label>
+                    <input type="file" id="csvFile" class="file-input" accept=".csv" required>
+                    <label for="csvFile" class="file-label">Seleccionar CSV</label>
+                    <span class="file-name" id="csvFileName">Ningun archivo seleccionado</span>
+                </div>
+                <div class="form-group">
+                    <label for="metadataFile">Metadata (JSON):</label>
+                    <input type="file" id="metadataFile" class="file-input" accept=".json" required>
+                    <label for="metadataFile" class="file-label">Seleccionar JSON</label>
+                    <span class="file-name" id="metadataFileName">Ningun archivo seleccionado</span>
+                </div>
+                <div class="card-actions">
+                    <button type="submit" id="splitBtn" class="btn btn-primary" disabled>
+                        Dividir Golden Record
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="status" style="display: none;"></div>
+
+    <div id="resultCard" class="card" style="display: none;">
+        <div class="card-header">
+            <h3>Resultado</h3>
+        </div>
+        <div class="card-body">
+            <div id="resultInfo"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/solutions/dxsentinel/split.js"></script>
+{% endblock %}

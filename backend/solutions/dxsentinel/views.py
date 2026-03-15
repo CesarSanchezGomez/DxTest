@@ -24,3 +24,11 @@ async def dx_sentinel_upload(request: Request, user=Depends(get_current_user)):
         "request": request,
         "user": user,
     })
+
+
+@router.get("/split", response_class=HTMLResponse)
+async def dx_sentinel_split(request: Request, user=Depends(get_current_user)):
+    return templates.TemplateResponse("solutions/dxsentinel/split.html", {
+        "request": request,
+        "user": user,
+    })

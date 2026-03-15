@@ -11,6 +11,7 @@ from .core.parsing import parse_successfactors_xml, parse_successfactors_with_cs
 from .core.generators.golden_record import GoldenRecordGenerator
 from .core.generators.golden_record.element_processor import ElementProcessor
 from .core.generators.golden_record.csv_generator import CSVGenerator
+from .core.generators.split import GoldenRecordSplitter
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ STORAGE_DIR = BASE_DIR / "backend" / "storage" / "dxsentinel"
 UPLOAD_DIR = STORAGE_DIR / "uploads"
 OUTPUT_DIR = STORAGE_DIR / "output"
 MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50MB
+MAX_CSV_UPLOAD_SIZE = 100 * 1024 * 1024  # 100MB
 
 
 def _ensure_dirs():
@@ -211,3 +213,50 @@ class ProcessingService:
             if f.suffix == ".zip":
                 return f
         return None
+
+
+class SplitService:
+    """Orquesta: upload CSV+JSON → split → ZIP."""
+
+    @staticmethod
+    def save_csv_upload(content: bytes, original_filename: str) -> tuple[str, Path]:
+        _ensure_dirs()
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_id = f"{timestamp}_{uuid.uuid4().hex[:8]}"
+        suffix = Path(original_filename).suffix or ".csv"
+        file_path = UPLOAD_DIR / f"{file_id}{suffix}"
+        file_path.write_bytes(content)
+        return file_id, file_path
+
+    @staticmethod
+    def split(csv_path: Path, metadata_path: Path) -> dict:
+        start_time = time.time()
+
+        _ensure_dirs()
+        run_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
+        output_dir = OUTPUT_DIR / run_id
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        import json as _json
+        with open(metadata_path, "r", encoding="utf-8") as f:
+            metadata = _json.load(f)
+
+        splitter = GoldenRecordSplitter(metadata)
+        generated_files = splitter.split(str(csv_path), str(output_dir))
+
+        processing_time = time.time() - start_time
+
+        zip_name = f"split_templates_{run_id}.zip"
+        zip_path = output_dir / zip_name
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for fpath_str in generated_files:
+                fpath = Path(fpath_str)
+                if fpath.exists():
+                    zf.write(fpath, fpath.name)
+
+        return {
+            "template_count": len(generated_files),
+            "processing_time": round(processing_time, 2),
+            "download_id": run_id,
+            "zip_path": str(zip_path),
+        }

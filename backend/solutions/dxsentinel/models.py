@@ -39,3 +39,16 @@ class ProcessResponse(BaseModel):
     processing_time: float = 0
     download_id: Optional[str] = None
     countries_processed: Optional[list[str]] = None
+
+
+class SplitRequest(BaseModel):
+    csv_file_id: str
+    metadata_file_id: str
+
+
+class SplitResponse(BaseModel):
+    success: bool
+    message: str
+    template_count: int = 0
+    processing_time: float = 0
+    download_id: Optional[str] = None
