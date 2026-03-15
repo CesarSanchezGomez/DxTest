@@ -719,7 +719,6 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (error) {
             console.error(error);
             showLoader(false);
-            setStatus('Error: ' + error.message, 'error');
             showToast(error.message, 'error');
         } finally {
             submitBtn.disabled = false;

@@ -254,9 +254,6 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error(error);
             showLoader(false);
             showToast(error.message, 'error');
-            statusDiv.style.display = 'block';
-            statusDiv.className = 'toast error';
-            statusDiv.textContent = error.message;
         } finally {
             splitBtn.disabled = false;
             splitBtn.textContent = originalText;
