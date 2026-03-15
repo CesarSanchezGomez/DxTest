@@ -9,36 +9,42 @@
 {% block content %}
 <div class="page-header">
     <h3>Split Golden Record</h3>
-    <p>Divide el Golden Record en layouts individuales por entidad SAP</p>
+    <p>Sube tu Golden Record lleno para dividirlo en layouts individuales por entidad SAP</p>
 </div>
 
 <div class="cards-stack">
     <div class="cards-grid">
         <div class="card">
             <div class="card-header">
-                <h3>Proyecto</h3>
+                <h3>Proyecto y Version</h3>
             </div>
             <div class="card-body">
                 <div class="form-group">
-                    <label for="projectSelect">Seleccionar Proyecto:</label>
+                    <label for="projectSelect">Proyecto:</label>
                     <select id="projectSelect" class="search-input" style="cursor: pointer;">
                         <option value="">Cargando proyectos...</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label for="versionSelect">Version:</label>
+                    <select id="versionSelect" class="search-input" disabled style="cursor: pointer;">
+                        <option value="">Selecciona un proyecto primero</option>
+                    </select>
+                    <span class="file-name" id="versionHelper">La version determina la metadata para el split</span>
                 </div>
             </div>
         </div>
 
         <div class="card">
             <div class="card-header">
-                <h3>Version</h3>
+                <h3>Golden Record (CSV)</h3>
             </div>
             <div class="card-body">
                 <div class="form-group">
-                    <label for="versionSelect">Seleccionar Version:</label>
-                    <select id="versionSelect" class="search-input" disabled style="cursor: pointer;">
-                        <option value="">Selecciona un proyecto primero</option>
-                    </select>
-                    <span class="file-name" id="versionHelper"></span>
+                    <label for="csvFile">Golden Record lleno:</label>
+                    <input type="file" id="csvFile" class="file-input" accept=".csv" disabled>
+                    <label for="csvFile" class="file-label" id="csvFileLabel">Seleccionar CSV</label>
+                    <span class="file-name" id="csvFileName">Selecciona una version primero</span>
                 </div>
                 <div class="card-actions">
                     <button type="button" id="splitBtn" class="btn btn-primary" disabled>

@@ -179,8 +179,8 @@ async def split_upload(file: UploadFile = File(...), user=Depends(get_current_us
         raise HTTPException(status_code=400, detail="Archivo sin nombre")
 
     ext = file.filename.lower().rsplit(".", 1)[-1] if "." in file.filename else ""
-    if ext not in ("csv", "json"):
-        raise HTTPException(status_code=400, detail="Solo se aceptan archivos CSV o JSON")
+    if ext != "csv":
+        raise HTTPException(status_code=400, detail="Solo se aceptan archivos CSV")
 
     content = await file.read()
     if len(content) > MAX_CSV_UPLOAD_SIZE:
@@ -194,7 +194,7 @@ async def split_upload(file: UploadFile = File(...), user=Depends(get_current_us
 
 @router.post("/split/process", response_model=SplitResponse)
 async def split_process(request: SplitRequest, user=Depends(get_current_user)):
-    # Obtener version y validar que pertenece al usuario
+    # Obtener version y validar ownership (para metadata)
     version = _project_service.get_version(request.version_id)
     if not version:
         raise HTTPException(status_code=404, detail="Version no encontrada")
@@ -203,20 +203,21 @@ async def split_process(request: SplitRequest, user=Depends(get_current_user)):
     if project.get("consultant_email") != user.email:
         raise HTTPException(status_code=403, detail="No autorizado")
 
-    csv_path = version.get("csv_storage_path")
     metadata_path = version.get("metadata_storage_path")
-
-    if not csv_path or not metadata_path:
-        raise HTTPException(status_code=400, detail="Version sin archivos generados")
+    if not metadata_path:
+        raise HTTPException(status_code=400, detail="Version sin metadata generada")
 
     from pathlib import Path as _Path
-    if not _Path(csv_path).exists():
-        raise HTTPException(status_code=404, detail="Archivo CSV no encontrado en disco")
     if not _Path(metadata_path).exists():
         raise HTTPException(status_code=404, detail="Archivo metadata no encontrado en disco")
 
+    # CSV subido por el usuario (golden record lleno)
+    csv_path = FileService.get_path(request.csv_file_id)
+    if not csv_path:
+        raise HTTPException(status_code=404, detail="Archivo CSV no encontrado. Sube el golden record lleno primero.")
+
     try:
-        result = SplitService.split(_Path(csv_path), _Path(metadata_path))
+        result = SplitService.split(csv_path, _Path(metadata_path))
         return SplitResponse(
             success=True,
             message="Split completado",

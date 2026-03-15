@@ -49,6 +49,7 @@ class ProcessResponse(BaseModel):
 
 class SplitRequest(BaseModel):
     version_id: str
+    csv_file_id: str
 
 
 class SplitResponse(BaseModel):

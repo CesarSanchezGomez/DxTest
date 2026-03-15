@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var projectSelect = document.getElementById('projectSelect');
     var versionSelect = document.getElementById('versionSelect');
     var versionHelper = document.getElementById('versionHelper');
+    var csvFile = document.getElementById('csvFile');
+    var csvFileName = document.getElementById('csvFileName');
     var splitBtn = document.getElementById('splitBtn');
     var statusDiv = document.getElementById('status');
     var resultCard = document.getElementById('resultCard');
@@ -14,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var projects = [];
     var versions = [];
     var selectedVersionId = null;
+    var uploadedCsvFileId = null;
 
     // ── Utilidades ───────────────────────────────────────────────────────
 
@@ -49,11 +52,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function setStatus(message, type) {
-        statusDiv.style.display = 'block';
-        statusDiv.className = 'toast ' + (type || 'info');
-        statusDiv.style.marginBottom = 'var(--spacing-md)';
-        statusDiv.innerHTML = message;
+    function updateSplitButton() {
+        splitBtn.disabled = !(selectedVersionId && uploadedCsvFileId);
     }
 
     // ── Load projects ────────────────────────────────────────────────────
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             projectSelect.innerHTML = '';
             if (projects.length === 0) {
-                projectSelect.innerHTML = '<option value="">No hay proyectos disponibles</option>';
+                projectSelect.innerHTML = '<option value="">No hay proyectos - genera un Golden Record primero</option>';
                 return;
             }
 
@@ -92,8 +92,9 @@ document.addEventListener('DOMContentLoaded', function () {
     async function loadVersions(project) {
         versionSelect.innerHTML = '<option value="">Cargando versiones...</option>';
         versionSelect.disabled = true;
-        splitBtn.disabled = true;
         selectedVersionId = null;
+        csvFile.disabled = true;
+        updateSplitButton();
 
         try {
             var url = API_BASE + '/versions/' + encodeURIComponent(project.instance_number) + '/' + encodeURIComponent(project.client_name);
@@ -104,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
             versionSelect.innerHTML = '';
             if (versions.length === 0) {
                 versionSelect.innerHTML = '<option value="">No hay versiones</option>';
-                if (versionHelper) { versionHelper.textContent = 'Genera un Golden Record primero'; versionHelper.style.color = 'var(--color-gray-dark)'; }
+                if (versionHelper) { versionHelper.textContent = 'Genera un Golden Record primero'; }
                 return;
             }
 
@@ -118,16 +119,39 @@ document.addEventListener('DOMContentLoaded', function () {
 
             versionSelect.disabled = false;
             selectedVersionId = versions[0].id;
-            splitBtn.disabled = false;
+            csvFile.disabled = false;
+            csvFileName.textContent = 'Ningun archivo seleccionado';
 
             if (versionHelper) {
                 versionHelper.textContent = versions.length + ' version(es) disponible(s)';
                 versionHelper.style.color = 'var(--color-success)';
             }
+
+            updateSplitButton();
         } catch (e) {
             versionSelect.innerHTML = '<option value="">Error cargando versiones</option>';
             showToast('Error cargando versiones', 'error');
         }
+    }
+
+    // ── Upload CSV ───────────────────────────────────────────────────────
+
+    async function uploadCsvFile(file) {
+        var formData = new FormData();
+        formData.append('file', file);
+
+        var response = await fetch(API_BASE + '/split/upload', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            var err = await response.json();
+            throw new Error(err.detail || 'Upload failed');
+        }
+
+        return await response.json();
     }
 
     // ── Event listeners ──────────────────────────────────────────────────
@@ -137,9 +161,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (isNaN(idx)) {
             versionSelect.innerHTML = '<option value="">Selecciona un proyecto primero</option>';
             versionSelect.disabled = true;
-            splitBtn.disabled = true;
+            csvFile.disabled = true;
             selectedVersionId = null;
-            if (versionHelper) versionHelper.textContent = '';
+            if (versionHelper) versionHelper.textContent = 'La version determina la metadata para el split';
+            updateSplitButton();
             return;
         }
         loadVersions(projects[idx]);
@@ -149,18 +174,52 @@ document.addEventListener('DOMContentLoaded', function () {
         var idx = parseInt(this.value, 10);
         if (!isNaN(idx) && versions[idx]) {
             selectedVersionId = versions[idx].id;
-            splitBtn.disabled = false;
+            csvFile.disabled = false;
         } else {
             selectedVersionId = null;
-            splitBtn.disabled = true;
+            csvFile.disabled = true;
+        }
+        updateSplitButton();
+    });
+
+    csvFile.addEventListener('change', async function () {
+        var file = this.files[0];
+        if (!file) {
+            uploadedCsvFileId = null;
+            csvFileName.textContent = 'Ningun archivo seleccionado';
+            updateSplitButton();
+            return;
+        }
+
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+            showToast('Solo se aceptan archivos CSV', 'error');
+            this.value = '';
+            return;
+        }
+
+        csvFileName.textContent = 'Subiendo ' + file.name + '...';
+        csvFileName.style.color = 'var(--color-gray-dark)';
+
+        try {
+            var result = await uploadCsvFile(file);
+            uploadedCsvFileId = result.file_id;
+            csvFileName.textContent = file.name;
+            csvFileName.style.color = 'var(--color-success)';
+            updateSplitButton();
+        } catch (e) {
+            csvFileName.textContent = 'Error subiendo archivo';
+            csvFileName.style.color = 'var(--color-error)';
+            uploadedCsvFileId = null;
+            showToast(e.message, 'error');
+            updateSplitButton();
         }
     });
 
     // ── Split ────────────────────────────────────────────────────────────
 
     splitBtn.addEventListener('click', async function () {
-        if (!selectedVersionId) {
-            showToast('Selecciona una version', 'error');
+        if (!selectedVersionId || !uploadedCsvFileId) {
+            showToast('Selecciona una version y sube el Golden Record', 'error');
             return;
         }
 
@@ -174,7 +233,10 @@ document.addEventListener('DOMContentLoaded', function () {
             var response = await fetch(API_BASE + '/split/process', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ version_id: selectedVersionId }),
+                body: JSON.stringify({
+                    version_id: selectedVersionId,
+                    csv_file_id: uploadedCsvFileId
+                }),
                 credentials: 'include'
             });
 
@@ -191,11 +253,14 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (error) {
             console.error(error);
             showLoader(false);
-            setStatus('Error: ' + error.message, 'error');
             showToast(error.message, 'error');
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'toast error';
+            statusDiv.textContent = error.message;
         } finally {
             splitBtn.disabled = false;
             splitBtn.textContent = originalText;
+            updateSplitButton();
         }
     });
 
