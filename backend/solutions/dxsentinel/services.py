@@ -1,3 +1,4 @@
+import shutil
 import uuid
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -191,7 +192,7 @@ class ProcessingService:
                 if fpath.exists():
                     zf.write(fpath, fpath.name)
 
-        return {
+        result = {
             "output_file": str(csv_path),
             "metadata_file": result_files["metadata"],
             "report_file": result_files.get("report", ""),
@@ -201,6 +202,16 @@ class ProcessingService:
             "processing_time": round(processing_time, 2),
             "countries_processed": country_codes,
         }
+
+        # Limpiar archivos sueltos del output dir (solo queda el ZIP para descarga)
+        for fpath in output_dir.iterdir():
+            if fpath.suffix != ".zip":
+                try:
+                    fpath.unlink()
+                except Exception:
+                    pass
+
+        return result
 
     @staticmethod
     def get_download_path(download_id: str) -> Optional[Path]:
@@ -213,6 +224,13 @@ class ProcessingService:
             if f.suffix == ".zip":
                 return f
         return None
+
+    @staticmethod
+    def cleanup_output(download_id: str) -> None:
+        """Elimina el directorio de output completo tras la descarga."""
+        run_dir = OUTPUT_DIR / download_id
+        if run_dir.exists():
+            shutil.rmtree(run_dir, ignore_errors=True)
 
 
 class SplitService:
@@ -253,6 +271,14 @@ class SplitService:
                 fpath = Path(fpath_str)
                 if fpath.exists():
                     zf.write(fpath, fpath.name)
+
+        # Limpiar archivos sueltos del output dir (solo queda el ZIP)
+        for fpath in output_dir.iterdir():
+            if fpath.suffix != ".zip":
+                try:
+                    fpath.unlink()
+                except Exception:
+                    pass
 
         return {
             "template_count": len(generated_files),

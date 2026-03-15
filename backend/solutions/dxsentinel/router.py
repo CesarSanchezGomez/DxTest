@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import FileResponse
 
 from backend.core.auth.dependencies import get_current_user
@@ -126,6 +126,11 @@ async def process_files(request: ProcessRequest, user=Depends(get_current_user))
             report_path=_Path(result["report_file"]) if result.get("report_file") else None,
         )
 
+        # 4. Limpiar uploads temporales (XML/CSF ya no se necesitan)
+        FileService.delete_file(request.main_file_id)
+        if request.csf_file_id:
+            FileService.delete_file(request.csf_file_id)
+
         return ProcessResponse(
             success=True,
             message="Procesamiento completado",
@@ -142,11 +147,12 @@ async def process_files(request: ProcessRequest, user=Depends(get_current_user))
 
 
 @router.get("/download/{download_id}")
-async def download_result(download_id: str, user=Depends(get_current_user)):
+async def download_result(download_id: str, bg: BackgroundTasks, user=Depends(get_current_user)):
     zip_path = ProcessingService.get_download_path(download_id)
     if not zip_path:
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
 
+    bg.add_task(ProcessingService.cleanup_output, download_id)
     return FileResponse(
         path=str(zip_path),
         filename=zip_path.name,
@@ -218,6 +224,10 @@ async def split_process(request: SplitRequest, user=Depends(get_current_user)):
     try:
         temp_metadata = _project_service.download_metadata_to_temp(metadata_storage_path)
         result = SplitService.split(csv_path, temp_metadata)
+
+        # Limpiar CSV subido y metadata temporal
+        FileService.delete_file(request.csv_file_id)
+
         return SplitResponse(
             success=True,
             message="Split completado",
@@ -233,11 +243,12 @@ async def split_process(request: SplitRequest, user=Depends(get_current_user)):
 
 
 @router.get("/split/download/{download_id}")
-async def split_download(download_id: str, user=Depends(get_current_user)):
+async def split_download(download_id: str, bg: BackgroundTasks, user=Depends(get_current_user)):
     zip_path = ProcessingService.get_download_path(download_id)
     if not zip_path:
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
 
+    bg.add_task(ProcessingService.cleanup_output, download_id)
     return FileResponse(
         path=str(zip_path),
         filename=zip_path.name,
