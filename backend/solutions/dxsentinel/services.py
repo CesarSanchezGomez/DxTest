@@ -192,7 +192,7 @@ class ProcessingService:
                 if fpath.exists():
                     zf.write(fpath, fpath.name)
 
-        result = {
+        return {
             "output_file": str(csv_path),
             "metadata_file": result_files["metadata"],
             "report_file": result_files.get("report", ""),
@@ -202,16 +202,6 @@ class ProcessingService:
             "processing_time": round(processing_time, 2),
             "countries_processed": country_codes,
         }
-
-        # Limpiar archivos sueltos del output dir (solo queda el ZIP para descarga)
-        for fpath in output_dir.iterdir():
-            if fpath.suffix != ".zip":
-                try:
-                    fpath.unlink()
-                except Exception:
-                    pass
-
-        return result
 
     @staticmethod
     def get_download_path(download_id: str) -> Optional[Path]:
@@ -224,6 +214,19 @@ class ProcessingService:
             if f.suffix == ".zip":
                 return f
         return None
+
+    @staticmethod
+    def cleanup_loose_files(download_id: str) -> None:
+        """Elimina archivos sueltos (CSV, metadata, report) del output dir, dejando solo el ZIP."""
+        run_dir = OUTPUT_DIR / download_id
+        if not run_dir.exists():
+            return
+        for fpath in run_dir.iterdir():
+            if fpath.suffix != ".zip":
+                try:
+                    fpath.unlink()
+                except Exception:
+                    pass
 
     @staticmethod
     def cleanup_output(download_id: str) -> None:

@@ -126,7 +126,8 @@ async def process_files(request: ProcessRequest, user=Depends(get_current_user))
             report_path=_Path(result["report_file"]) if result.get("report_file") else None,
         )
 
-        # 4. Limpiar uploads temporales (XML/CSF ya no se necesitan)
+        # 4. Limpiar archivos locales (ya estan en Supabase Storage)
+        ProcessingService.cleanup_loose_files(result["download_id"])
         FileService.delete_file(request.main_file_id)
         if request.csf_file_id:
             FileService.delete_file(request.csf_file_id)
