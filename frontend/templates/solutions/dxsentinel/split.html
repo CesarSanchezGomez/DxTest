@@ -4,6 +4,36 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="/static/css/solutions/dxmodels/forms.css">
+<style>
+    .validation-panel { margin-top: var(--sp-4); }
+    .validation-summary {
+        display: flex; gap: var(--sp-4); padding: var(--sp-3) var(--sp-4);
+        border-radius: var(--radius-sm); background: var(--surface-2);
+        font-size: 13px; font-weight: 600;
+    }
+    .validation-summary .badge-fatal { background: #D32F2F; color: #fff; }
+    .validation-summary .badge-error { background: #F57C00; color: #fff; }
+    .validation-summary .badge-warning { background: #FBC02D; color: #1a1a1a; }
+    .validation-summary .badge-ok { background: var(--color-success); color: #fff; }
+    .validation-issues {
+        max-height: 300px; overflow-y: auto;
+        margin-top: var(--sp-3); font-size: 12px;
+    }
+    .validation-issues table { width: 100%; border-collapse: collapse; }
+    .validation-issues th {
+        text-align: left; padding: var(--sp-2) var(--sp-3);
+        background: var(--surface-2); font-weight: 600; position: sticky; top: 0;
+    }
+    .validation-issues td { padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--surface-2); }
+    .sev-fatal { color: #D32F2F; font-weight: 700; }
+    .sev-error { color: #F57C00; font-weight: 700; }
+    .sev-warning { color: #FBC02D; font-weight: 600; }
+    .btn-validate {
+        background: var(--surface-3); color: var(--text-primary);
+        border: 1px solid var(--surface-3);
+    }
+    .btn-validate:hover { background: var(--surface-2); }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -46,12 +76,24 @@
                     <label for="csvFile" class="file-label" id="csvFileLabel">Seleccionar CSV</label>
                     <span class="file-name" id="csvFileName">Selecciona una version primero</span>
                 </div>
-                <div class="card-actions">
+                <div class="card-actions" style="display: flex; gap: var(--sp-3);">
+                    <button type="button" id="validateBtn" class="btn btn-validate" disabled>
+                        Validar
+                    </button>
                     <button type="button" id="splitBtn" class="btn btn-primary" disabled>
                         Dividir Golden Record
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div id="validationCard" class="card" style="display: none;">
+        <div class="card-header">
+            <h3>Resultado de Validacion</h3>
+        </div>
+        <div class="card-body">
+            <div id="validationContent"></div>
         </div>
     </div>
 

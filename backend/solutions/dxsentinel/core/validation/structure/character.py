@@ -1,8 +1,4 @@
-"""Validacion de caracteres en IDs tecnicos → FATAL.
-
-Los IDs de elementos y campos deben contener solo caracteres validos
-para garantizar que el CSV y el split funcionen correctamente.
-"""
+"""Validacion de caracteres en IDs tecnicos → FATAL."""
 
 from __future__ import annotations
 
@@ -18,44 +14,21 @@ _CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 @register_validator
 class CharacterStructureValidator(BaseValidator):
-    """Verifica caracteres invalidos en IDs tecnicos → FATAL."""
+    """Verifica caracteres invalidos en IDs tecnicos (FATAL)."""
 
     def validate(self, ctx: ValidationContext) -> list[ValidationResult]:
         issues: list[ValidationResult] = []
 
         for col in ctx.columns:
-            field_id = col.get("field_id", "")
-            full_id = col.get("full_id", "")
-            element_id = col.get("element_id", "")
+            fid = col.get("field_id", "")
+            full = col.get("full_id", "")
+            eid = col.get("element_id", "")
 
-            if field_id and not _VALID_ID_PATTERN.match(field_id):
-                issues.append(ValidationResult(
-                    severity=Severity.FATAL,
-                    code="CHAR_001",
-                    message=f"Field ID contiene caracteres invalidos: '{field_id}'",
-                    element_id=element_id,
-                    field_id=field_id,
-                    validator=self.name,
-                ))
-
-            if full_id and not _VALID_ID_PATTERN.match(full_id):
-                issues.append(ValidationResult(
-                    severity=Severity.FATAL,
-                    code="CHAR_002",
-                    message=f"Full field ID contiene caracteres invalidos: '{full_id}'",
-                    element_id=element_id,
-                    field_id=field_id,
-                    validator=self.name,
-                ))
-
-            if field_id and _CONTROL_CHARS.search(field_id):
-                issues.append(ValidationResult(
-                    severity=Severity.FATAL,
-                    code="CHAR_003",
-                    message=f"Caracteres de control en field ID: '{field_id}'",
-                    element_id=element_id,
-                    field_id=field_id,
-                    validator=self.name,
-                ))
+            if fid and not _VALID_ID_PATTERN.match(fid):
+                issues.append(self._emit(Severity.FATAL, "CHAR_001", element_id=eid, field_id=fid))
+            if full and not _VALID_ID_PATTERN.match(full):
+                issues.append(self._emit(Severity.FATAL, "CHAR_002", element_id=eid, field_id=fid, full_id=full))
+            if fid and _CONTROL_CHARS.search(fid):
+                issues.append(self._emit(Severity.FATAL, "CHAR_003", element_id=eid, field_id=fid))
 
         return issues

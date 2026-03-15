@@ -6,55 +6,63 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Optional
 
-from .result import ValidationResult
+from .result import Severity, ValidationResult
+from .messages import Messages
 
 
 @dataclass
 class ValidationContext:
-    """Datos compartidos entre todos los validadores.
-
-    Se construye una sola vez y se pasa a cada validador para evitar
-    recalcular o duplicar acceso a datos.
-    """
+    """Datos compartidos entre todos los validadores."""
 
     parsed_model: dict
-    """Modelo XML normalizado (output del parser)."""
-
     processed_data: dict
-    """Output de ElementProcessor.process_model()."""
-
     columns: list[dict]
-    """Columnas consolidadas del CSV."""
-
     field_catalog: dict
-    """Catalogo de campos (output de MetadataGenerator)."""
-
     target_countries: Optional[list[str]] = None
-    """Paises objetivo (None = todos)."""
-
     format_groups: dict = field(default_factory=dict)
-    """Reglas de formato por pais (country_code -> groups)."""
-
     language_code: str = "en-us"
-    """Idioma solicitado para labels."""
-
     upload_filename: Optional[str] = None
-    """Nombre del archivo subido (para validaciones de upload)."""
-
     upload_size_bytes: Optional[int] = None
-    """Tamano del archivo subido en bytes."""
 
 
 class BaseValidator(ABC):
-    """Contrato que todo validador debe cumplir."""
+    """Contrato base con helper para emitir resultados."""
 
     @abstractmethod
     def validate(self, ctx: ValidationContext) -> list[ValidationResult]:
-        """Ejecuta las validaciones y retorna problemas encontrados.
-
-        Retorna lista vacia si todo esta OK.
-        """
+        """Retorna lista de problemas (vacia si todo OK)."""
 
     @property
     def name(self) -> str:
         return self.__class__.__name__
+
+    def _emit(
+        self,
+        severity: Severity,
+        code: str,
+        *,
+        element_id: str | None = None,
+        field_id: str | None = None,
+        country_code: str | None = None,
+        **msg_kwargs: object,
+    ) -> ValidationResult:
+        """Crea un ValidationResult usando el catalogo de mensajes.
+
+        Evita repetir severity/code/validator/message en cada validator.
+        """
+        # Merge context fields into message kwargs
+        all_kwargs = {
+            "element_id": element_id or "",
+            "field_id": field_id or "",
+            "country_code": country_code or "",
+            **msg_kwargs,
+        }
+        return ValidationResult(
+            severity=severity,
+            code=code,
+            message=Messages.get(code, **all_kwargs),
+            element_id=element_id,
+            field_id=field_id,
+            country_code=country_code,
+            validator=self.name,
+        )

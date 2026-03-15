@@ -47,6 +47,29 @@ class ProcessResponse(BaseModel):
     client_name: Optional[str] = None
 
 
+class ValidateRequest(BaseModel):
+    version_id: str
+    csv_file_id: str
+
+
+class ValidationIssue(BaseModel):
+    severity: str
+    code: str
+    message: str
+    element_id: Optional[str] = None
+    field_id: Optional[str] = None
+    country_code: Optional[str] = None
+    validator: Optional[str] = None
+
+
+class ValidateResponse(BaseModel):
+    success: bool
+    message: str
+    can_split: bool = False
+    summary: dict = {}
+    issues: list[ValidationIssue] = []
+
+
 class SplitRequest(BaseModel):
     version_id: str
     csv_file_id: str

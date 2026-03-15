@@ -7,6 +7,7 @@ import logging
 from .registry import get_registered_validators
 from .result import Severity, ValidationReport, ValidationResult
 from .base import BaseValidator, ValidationContext
+from .messages import Messages
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +60,7 @@ class ValidationEngine:
                 report.add(ValidationResult(
                     severity=Severity.ERROR,
                     code="ENGINE_001",
-                    message=f"Validator '{validator.name}' fallo: {e}",
+                    message=Messages.get("ENGINE_001", validator=validator.name, error=e),
                     validator=validator.name,
                 ))
 

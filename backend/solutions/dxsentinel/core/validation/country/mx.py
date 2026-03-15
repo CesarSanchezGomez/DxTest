@@ -1,10 +1,4 @@
-"""Validaciones especificas de Mexico → ERROR.
-
-Verifica configuracion de entidades relevantes para MX:
-- nationalIdCard (CURP): requiere card-type, country
-- workPermitInfo: requiere document-type, document-number, country
-- Format groups MX: deben tener regex definidos
-"""
+"""Validaciones especificas de Mexico → ERROR."""
 
 from __future__ import annotations
 
@@ -15,17 +9,8 @@ from ..result import Severity, ValidationResult
 from ..base import ValidationContext
 from .base import CountryValidator
 
-# CURP: 18 caracteres alfanumericos con estructura definida
-_CURP_PATTERN = re.compile(
-    r"^[A-Z]{4}\d{6}[HM][A-Z]{5}[A-Z0-9]\d$",
-    re.IGNORECASE,
-)
-
-# RFC persona fisica: 13 caracteres | RFC persona moral: 12 caracteres
-_RFC_PATTERN = re.compile(
-    r"^[A-Z&Ñ]{3,4}\d{6}[A-Z0-9]{3}$",
-    re.IGNORECASE,
-)
+_CURP_PATTERN = re.compile(r"^[A-Z]{4}\d{6}[HM][A-Z]{5}[A-Z0-9]\d$", re.IGNORECASE)
+_RFC_PATTERN = re.compile(r"^[A-Z&Ñ]{3,4}\d{6}[A-Z0-9]{3}$", re.IGNORECASE)
 
 
 @register_validator
@@ -39,63 +24,25 @@ class MexicoValidator(CountryValidator):
     def validate_country(self, ctx: ValidationContext) -> list[ValidationResult]:
         issues: list[ValidationResult] = []
 
-        self._check_national_id_config(ctx, issues)
-        self._check_work_permit_config(ctx, issues)
+        for elem in ctx.processed_data.get("elements", []):
+            eid = elem.get("element_id", "")
+            cc = elem.get("country_code")
+
+            if "nationalIdCard" in eid and (not cc or cc == "MX"):
+                self._check_required(elem, {"card-type", "country"}, "MX_CURP_001", issues)
+
+            if "workPermitInfo" in eid and (not cc or cc == "MX"):
+                self._check_required(elem, {"document-type", "document-number", "country"}, "MX_WP_001", issues)
 
         return issues
 
-    def _check_national_id_config(self, ctx: ValidationContext, issues: list[ValidationResult]) -> None:
-        """Verifica configuracion de nationalIdCard para MX (CURP)."""
-        for elem in ctx.processed_data.get("elements", []):
-            elem_id = elem.get("element_id", "")
-            country = elem.get("country_code")
-
-            if "nationalIdCard" not in elem_id:
-                continue
-            if country and country != "MX":
-                continue
-
-            field_ids = {f.get("field_id", "") for f in elem.get("fields", [])}
-
-            required_fields = {"card-type", "country"}
-            missing = required_fields - field_ids
-            if missing:
-                issues.append(ValidationResult(
-                    severity=Severity.ERROR,
-                    code="MX_CURP_001",
-                    message=(
-                        f"nationalIdCard para MX: campos faltantes para CURP: "
-                        f"{', '.join(sorted(missing))}"
-                    ),
-                    element_id=elem_id,
-                    country_code="MX",
-                    validator=self.name,
-                ))
-
-    def _check_work_permit_config(self, ctx: ValidationContext, issues: list[ValidationResult]) -> None:
-        """Verifica configuracion de workPermitInfo para MX."""
-        for elem in ctx.processed_data.get("elements", []):
-            elem_id = elem.get("element_id", "")
-            country = elem.get("country_code")
-
-            if "workPermitInfo" not in elem_id:
-                continue
-            if country and country != "MX":
-                continue
-
-            field_ids = {f.get("field_id", "") for f in elem.get("fields", [])}
-
-            required_fields = {"document-type", "document-number", "country"}
-            missing = required_fields - field_ids
-            if missing:
-                issues.append(ValidationResult(
-                    severity=Severity.ERROR,
-                    code="MX_WP_001",
-                    message=(
-                        f"workPermitInfo para MX: campos faltantes: "
-                        f"{', '.join(sorted(missing))}"
-                    ),
-                    element_id=elem_id,
-                    country_code="MX",
-                    validator=self.name,
-                ))
+    def _check_required(self, elem: dict, required: set[str], code: str, issues: list) -> None:
+        field_ids = {f.get("field_id", "") for f in elem.get("fields", [])}
+        missing = required - field_ids
+        if missing:
+            issues.append(self._emit(
+                Severity.ERROR, code,
+                element_id=elem.get("element_id", ""),
+                country_code="MX",
+                missing=", ".join(sorted(missing)),
+            ))

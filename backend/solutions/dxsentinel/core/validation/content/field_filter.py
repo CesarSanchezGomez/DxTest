@@ -1,11 +1,7 @@
-"""Wrapper de validacion sobre FieldFilter existente → ERROR.
+"""Wrapper de validacion sobre FieldFilter existente → WARNING.
 
-Re-expone las reglas del FieldFilter (visibility, excluded, internal,
-deprecated, custom ranges) como ValidationResults formales para que
-queden registradas en el reporte, en vez de descartarse silenciosamente.
-
-No duplica la logica de filtrado: usa el FieldFilter existente y traduce
-sus exclusion_reasons a resultados de validacion.
+Delega la logica de filtrado al FieldFilter existente y traduce
+sus exclusion_reasons a ValidationResults formales.
 """
 
 from __future__ import annotations
@@ -16,71 +12,51 @@ from ..base import BaseValidator, ValidationContext
 from ...generators.golden_record.field_filter import FieldFilter
 
 
-# Mapa de exclusion_reason → (codigo, severity)
-_REASON_MAP: dict[str, tuple[str, Severity]] = {
-    "visibility='none'":              ("FILTER_001", Severity.WARNING),
-    "viewable='false'":               ("FILTER_002", Severity.WARNING),
-    "campo técnico interno":          ("FILTER_003", Severity.WARNING),
-    "filtered_by_attributes":         ("FILTER_004", Severity.WARNING),
-    "filtered_custom_range":          ("FILTER_005", Severity.WARNING),
+# exclusion_reason substring → codigo de mensaje
+_REASON_TO_CODE: dict[str, str] = {
+    "visibility='none'":     "FILTER_001",
+    "viewable='false'":      "FILTER_002",
+    "campo técnico interno": "FILTER_003",
+    "filtered_by_attributes": "FILTER_004",
+    "filtered_custom_range": "FILTER_005",
+    "explicitly_excluded":   "FILTER_006",
+    "visibility=":           "FILTER_007",
 }
 
 
 @register_validator
 class FieldFilterValidator(BaseValidator):
-    """Ejecuta FieldFilter sobre campos del XML y reporta exclusiones.
-
-    Severidad WARNING: informativo. Los campos excluidos no aparecen
-    en el golden record pero el usuario debe saber por que.
-    """
+    """Reporta campos excluidos por FieldFilter (WARNING)."""
 
     def validate(self, ctx: ValidationContext) -> list[ValidationResult]:
         issues: list[ValidationResult] = []
-        field_filter = FieldFilter()
-
         structure = ctx.parsed_model.get("structure", {})
         if not structure:
             return issues
 
-        self._walk_and_check(structure, field_filter, issues)
-
+        field_filter = FieldFilter()
+        self._walk(structure, field_filter, issues)
         return issues
 
-    def _walk_and_check(
-        self, node: dict, field_filter: FieldFilter,
-        issues: list[ValidationResult],
-    ) -> None:
+    def _walk(self, node: dict, ff: FieldFilter, issues: list[ValidationResult]) -> None:
         tag = node.get("tag", "").lower()
 
-        if "hris-field" in tag or "field" == tag:
-            field_id = node.get("technical_id") or node.get("id", "")
-            include, reason = field_filter.filter_field(node)
-
+        if "hris-field" in tag or tag == "field":
+            fid = node.get("technical_id") or node.get("id", "")
+            include, reason = ff.filter_field(node)
             if not include and reason:
-                code, severity = self._resolve_reason(reason)
-                issues.append(ValidationResult(
-                    severity=severity,
-                    code=code,
-                    message=f"Campo '{field_id}' excluido: {reason}",
-                    field_id=field_id,
-                    validator=self.name,
+                code = self._resolve_code(reason)
+                issues.append(self._emit(
+                    Severity.WARNING, code,
+                    field_id=fid, reason=reason, visibility=reason,
                 ))
 
         for child in node.get("children", []):
-            self._walk_and_check(child, field_filter, issues)
+            self._walk(child, ff, issues)
 
-    def _resolve_reason(self, reason: str) -> tuple[str, Severity]:
-        """Mapea la razon de exclusion a codigo y severidad."""
-        for key, (code, severity) in _REASON_MAP.items():
+    @staticmethod
+    def _resolve_code(reason: str) -> str:
+        for key, code in _REASON_TO_CODE.items():
             if key in reason:
-                return code, severity
-
-        # Exclusion explicita por ID
-        if "explicitly_excluded" in reason:
-            return "FILTER_006", Severity.WARNING
-
-        # Visibility no reconocida
-        if "visibility=" in reason:
-            return "FILTER_007", Severity.WARNING
-
-        return "FILTER_099", Severity.WARNING
+                return code
+        return "FILTER_099"

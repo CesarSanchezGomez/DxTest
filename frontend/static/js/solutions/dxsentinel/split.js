@@ -8,15 +8,19 @@ document.addEventListener('DOMContentLoaded', function () {
     var versionHelper = document.getElementById('versionHelper');
     var csvFile = document.getElementById('csvFile');
     var csvFileName = document.getElementById('csvFileName');
+    var validateBtn = document.getElementById('validateBtn');
     var splitBtn = document.getElementById('splitBtn');
     var statusDiv = document.getElementById('status');
     var resultCard = document.getElementById('resultCard');
     var resultInfo = document.getElementById('resultInfo');
+    var validationCard = document.getElementById('validationCard');
+    var validationContent = document.getElementById('validationContent');
 
     var projects = [];
     var versions = [];
     var selectedVersionId = null;
     var uploadedCsvFileId = null;
+    var validationPassed = false; // true si validacion permite split
 
     // ── Utilidades ───────────────────────────────────────────────────────
 
@@ -52,8 +56,17 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function updateSplitButton() {
-        splitBtn.disabled = !(selectedVersionId && uploadedCsvFileId);
+    function updateButtons() {
+        validateBtn.disabled = !(selectedVersionId && uploadedCsvFileId);
+        splitBtn.disabled = !(selectedVersionId && uploadedCsvFileId && validationPassed);
+    }
+
+    function resetValidation() {
+        validationPassed = false;
+        validationCard.style.display = 'none';
+        validationContent.innerHTML = '';
+        resultCard.style.display = 'none';
+        updateButtons();
     }
 
     // ── Load projects ────────────────────────────────────────────────────
@@ -94,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
         versionSelect.disabled = true;
         selectedVersionId = null;
         csvFile.disabled = true;
-        updateSplitButton();
+        resetValidation();
 
         try {
             var url = API_BASE + '/versions/' + encodeURIComponent(project.instance_number) + '/' + encodeURIComponent(project.client_name);
@@ -127,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 versionHelper.style.color = 'var(--color-success)';
             }
 
-            updateSplitButton();
+            updateButtons();
         } catch (e) {
             versionSelect.innerHTML = '<option value="">Error cargando versiones</option>';
             showToast('Error cargando versiones', 'error');
@@ -164,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function () {
             csvFile.disabled = true;
             selectedVersionId = null;
             if (versionHelper) versionHelper.textContent = 'La version determina la metadata para el split';
-            updateSplitButton();
+            resetValidation();
             return;
         }
         loadVersions(projects[idx]);
@@ -179,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function () {
             selectedVersionId = null;
             csvFile.disabled = true;
         }
-        updateSplitButton();
+        resetValidation();
     });
 
     csvFile.addEventListener('change', async function () {
@@ -187,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!file) {
             uploadedCsvFileId = null;
             csvFileName.textContent = 'Ningun archivo seleccionado';
-            updateSplitButton();
+            resetValidation();
             return;
         }
 
@@ -205,21 +218,120 @@ document.addEventListener('DOMContentLoaded', function () {
             uploadedCsvFileId = result.file_id;
             csvFileName.textContent = file.name;
             csvFileName.style.color = 'var(--color-success)';
-            updateSplitButton();
+            resetValidation();
         } catch (e) {
             csvFileName.textContent = 'Error subiendo archivo';
             csvFileName.style.color = 'var(--color-error)';
             uploadedCsvFileId = null;
             showToast(e.message, 'error');
-            updateSplitButton();
+            resetValidation();
         }
     });
+
+    // ── Validate ─────────────────────────────────────────────────────────
+
+    validateBtn.addEventListener('click', async function () {
+        if (!selectedVersionId || !uploadedCsvFileId) {
+            showToast('Selecciona una version y sube el Golden Record', 'error');
+            return;
+        }
+
+        validateBtn.disabled = true;
+        var originalText = validateBtn.textContent;
+        validateBtn.textContent = 'Validando...';
+
+        try {
+            showLoader(true, 'Validando Golden Record...');
+
+            var response = await fetch(API_BASE + '/split/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    version_id: selectedVersionId,
+                    csv_file_id: uploadedCsvFileId
+                }),
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                var err = await response.json();
+                throw new Error(err.detail || 'Validacion fallida');
+            }
+
+            var result = await response.json();
+            showLoader(false);
+            displayValidation(result);
+
+        } catch (error) {
+            console.error(error);
+            showLoader(false);
+            showToast(error.message, 'error');
+        } finally {
+            validateBtn.disabled = false;
+            validateBtn.textContent = originalText;
+            updateButtons();
+        }
+    });
+
+    function displayValidation(result) {
+        var summary = result.summary || {};
+        var issues = result.issues || [];
+        validationPassed = result.can_split;
+
+        // Summary badges
+        var html = '<div class="validation-summary">';
+        if (summary.fatal > 0) {
+            html += '<span class="badge badge-fatal">FATAL: ' + summary.fatal + '</span>';
+        }
+        if (summary.error > 0) {
+            html += '<span class="badge badge-error">ERROR: ' + summary.error + '</span>';
+        }
+        if (summary.warning > 0) {
+            html += '<span class="badge badge-warning">WARNING: ' + summary.warning + '</span>';
+        }
+        if (summary.total === 0) {
+            html += '<span class="badge badge-ok">Sin problemas</span>';
+        }
+        html += '<span style="margin-left: auto; font-weight: 400;">' + result.message + '</span>';
+        html += '</div>';
+
+        // Issues table
+        if (issues.length > 0) {
+            html += '<div class="validation-issues"><table>';
+            html += '<thead><tr><th>Severidad</th><th>Codigo</th><th>Mensaje</th><th>Entidad</th><th>Campo</th></tr></thead>';
+            html += '<tbody>';
+            for (var i = 0; i < issues.length; i++) {
+                var issue = issues[i];
+                var sevClass = 'sev-' + issue.severity;
+                html += '<tr>';
+                html += '<td class="' + sevClass + '">' + issue.severity.toUpperCase() + '</td>';
+                html += '<td>' + issue.code + '</td>';
+                html += '<td>' + issue.message + '</td>';
+                html += '<td>' + (issue.element_id || '-') + '</td>';
+                html += '<td>' + (issue.field_id || '-') + '</td>';
+                html += '</tr>';
+            }
+            html += '</tbody></table></div>';
+        }
+
+        validationContent.innerHTML = html;
+        validationCard.style.display = 'block';
+
+        // Feedback
+        if (validationPassed) {
+            showToast(result.message, 'success');
+        } else {
+            showToast(result.message, 'error');
+        }
+
+        updateButtons();
+    }
 
     // ── Split ────────────────────────────────────────────────────────────
 
     splitBtn.addEventListener('click', async function () {
-        if (!selectedVersionId || !uploadedCsvFileId) {
-            showToast('Selecciona una version y sube el Golden Record', 'error');
+        if (!selectedVersionId || !uploadedCsvFileId || !validationPassed) {
+            showToast('Valida primero el Golden Record', 'error');
             return;
         }
 
@@ -257,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } finally {
             splitBtn.disabled = false;
             splitBtn.textContent = originalText;
-            updateSplitButton();
+            updateButtons();
         }
     });
 
