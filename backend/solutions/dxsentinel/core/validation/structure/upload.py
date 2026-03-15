@@ -14,6 +14,8 @@ MAX_CSV_UPLOAD_SIZE = 100 * 1024 * 1024  # 100 MB
 class UploadValidator(BaseValidator):
     """Verifica restricciones del archivo subido (FATAL)."""
 
+    modes = ("generation",)
+
     def validate(self, ctx: ValidationContext) -> list[ValidationResult]:
         issues: list[ValidationResult] = []
         filename = ctx.upload_filename

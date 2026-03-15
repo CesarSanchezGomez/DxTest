@@ -11,6 +11,8 @@ from ..base import BaseValidator, ValidationContext
 class FieldRulesValidator(BaseValidator):
     """Verifica coherencia de reglas de campos (ERROR)."""
 
+    modes = ("generation",)
+
     def validate(self, ctx: ValidationContext) -> list[ValidationResult]:
         issues: list[ValidationResult] = []
 

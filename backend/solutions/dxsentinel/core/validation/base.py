@@ -24,9 +24,22 @@ class ValidationContext:
     upload_filename: Optional[str] = None
     upload_size_bytes: Optional[int] = None
 
+    # ── Datos CSV (solo para validacion pre-split) ───────────────────────
+    csv_headers: list[str] = field(default_factory=list)
+    """IDs de columnas del CSV (fila 1)."""
+
+    csv_rows: list[dict] = field(default_factory=list)
+    """Filas de datos del CSV como [{field_id: value}, ...]."""
+
+    mode: str = "generation"
+    """Modo de validacion: 'generation' (XML) o 'split' (CSV)."""
+
 
 class BaseValidator(ABC):
     """Contrato base con helper para emitir resultados."""
+
+    # Sobreescribir en subclases para restringir el modo
+    modes: tuple[str, ...] = ("generation", "split")
 
     @abstractmethod
     def validate(self, ctx: ValidationContext) -> list[ValidationResult]:
@@ -46,11 +59,7 @@ class BaseValidator(ABC):
         country_code: str | None = None,
         **msg_kwargs: object,
     ) -> ValidationResult:
-        """Crea un ValidationResult usando el catalogo de mensajes.
-
-        Evita repetir severity/code/validator/message en cada validator.
-        """
-        # Merge context fields into message kwargs
+        """Crea un ValidationResult usando el catalogo de mensajes."""
         all_kwargs = {
             "element_id": element_id or "",
             "field_id": field_id or "",

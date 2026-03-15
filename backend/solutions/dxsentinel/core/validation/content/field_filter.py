@@ -28,6 +28,8 @@ _REASON_TO_CODE: dict[str, str] = {
 class FieldFilterValidator(BaseValidator):
     """Reporta campos excluidos por FieldFilter (WARNING)."""
 
+    modes = ("generation",)
+
     def validate(self, ctx: ValidationContext) -> list[ValidationResult]:
         issues: list[ValidationResult] = []
         structure = ctx.parsed_model.get("structure", {})

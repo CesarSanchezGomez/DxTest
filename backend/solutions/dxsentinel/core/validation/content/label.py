@@ -17,6 +17,8 @@ _CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 class LabelValidator(BaseValidator):
     """Verifica calidad de labels multilingues (WARNING)."""
 
+    modes = ("generation",)
+
     def validate(self, ctx: ValidationContext) -> list[ValidationResult]:
         issues: list[ValidationResult] = []
         lang = ctx.language_code.lower().replace("_", "-")

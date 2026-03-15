@@ -13,15 +13,18 @@ logger = logging.getLogger(__name__)
 
 # Orden de ejecucion: estructura primero (short-circuit si FATAL)
 _PHASE_ORDER = [
-    # structure/
+    # structure/ (solo mode=generation)
     "UploadValidator",
     "XMLStructureValidator",
     "CharacterStructureValidator",
-    # content/
+    # content/ (ambos modos, segun su .modes)
     "FieldRulesValidator",
     "FieldFilterValidator",
     "FormatGroupValidator",
     "LabelValidator",
+    # csv data validators (solo mode=split)
+    "RequiredFieldsValidator",
+    "DateFormatValidator",
     # country/ validators se ejecutan al final automaticamente
 ]
 
@@ -34,22 +37,11 @@ _SHORT_CIRCUIT_ON_FATAL = {
 
 
 class ValidationEngine:
-    """Ejecuta validadores registrados y recopila resultados.
-
-    Flujo:
-    1. Upload → si hay FATAL (archivo invalido), short-circuit.
-    2. XMLStructure → si hay FATAL (modelo roto), short-circuit.
-    3. CharacterStructure → FATAL en IDs detiene.
-    4. FieldRules → ERROR en coherencia de tipos/visibility.
-    5. FieldFilter → WARNING por campos excluidos.
-    6. FormatGroup → ERROR/WARNING en format groups.
-    7. Label → WARNING en labels.
-    8. Country validators → filtrados por target_countries.
-    """
+    """Ejecuta validadores registrados, filtrando por ctx.mode."""
 
     def validate(self, ctx: ValidationContext) -> ValidationReport:
         report = ValidationReport()
-        validators = self._build_ordered_validators()
+        validators = self._build_ordered_validators(ctx.mode)
 
         for validator in validators:
             try:
@@ -73,14 +65,17 @@ class ValidationEngine:
 
         return report
 
-    def _build_ordered_validators(self) -> list[BaseValidator]:
-        """Ordena validators: fases conocidas primero, country al final."""
+    def _build_ordered_validators(self, mode: str) -> list[BaseValidator]:
+        """Ordena validators y filtra por modo."""
         registered = get_registered_validators()
         by_name: dict[str, BaseValidator] = {}
         country_validators: list[BaseValidator] = []
 
         for cls in registered:
             instance = cls()
+            # Filtrar por modo
+            if mode not in instance.modes:
+                continue
             name = instance.name
             from .country.base import CountryValidator
             if isinstance(instance, CountryValidator):
@@ -94,11 +89,8 @@ class ValidationEngine:
             if name in by_name:
                 ordered.append(by_name.pop(name))
 
-        # Validators custom no listados en _PHASE_ORDER
         for instance in by_name.values():
             ordered.append(instance)
 
-        # Country validators al final
         ordered.extend(country_validators)
-
         return ordered

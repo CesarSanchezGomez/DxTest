@@ -15,6 +15,8 @@ _VALID_ID_PATTERN = re.compile(r"^[a-zA-Z0-9_\-.:]+$")
 class XMLStructureValidator(BaseValidator):
     """Verifica integridad estructural del modelo parseado (FATAL)."""
 
+    modes = ("generation",)
+
     def validate(self, ctx: ValidationContext) -> list[ValidationResult]:
         issues: list[ValidationResult] = []
         structure = ctx.parsed_model.get("structure", {})

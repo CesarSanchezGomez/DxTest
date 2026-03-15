@@ -62,10 +62,18 @@ class Messages:
         "FMT_003": "Format group '{group_id}' formato '{fmt_id}' regex invalido: {error}",
         "FMT_004": "Format group '{group_id}' formato '{fmt_id}' sin display_format",
 
+        # required_fields.py
+        "REQ_001": "Campo required vacio en fila {row}: {field_id}",
+
+        # date_format.py
+        "DATE_001": "Formato de fecha no reconocido en fila {row}: '{value}' ({field_id})",
+
         # ── country/ ─────────────────────────────────────────────────────
-        # mx.py
-        "MX_CURP_001": "nationalIdCard para MX: campos faltantes para CURP: {missing}",
-        "MX_WP_001": "workPermitInfo para MX: campos faltantes: {missing}",
+        # curp.py
+        "CURP_001": "CURP invalida en fila {row}: '{value}' - {reason}",
+
+        # rfc.py
+        "RFC_001": "RFC invalido en fila {row}: '{value}' - {reason}",
 
         # ── engine ───────────────────────────────────────────────────────
         "ENGINE_001": "Validator '{validator}' fallo: {error}",
@@ -73,11 +81,7 @@ class Messages:
 
     @classmethod
     def get(cls, code: str, **kwargs: object) -> str:
-        """Obtiene y formatea un mensaje por codigo.
-
-        Si el codigo no existe, retorna el codigo tal cual.
-        Si el formateo falla, retorna el template sin formatear.
-        """
+        """Obtiene y formatea un mensaje por codigo."""
         template = cls._CATALOG.get(code, code)
         if not kwargs:
             return template

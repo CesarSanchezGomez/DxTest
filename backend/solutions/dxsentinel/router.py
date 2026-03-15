@@ -229,25 +229,34 @@ async def split_validate(request: ValidateRequest, user=Depends(get_current_user
 
     temp_metadata = None
     try:
+        import csv
+        import io
         import json
+
+        # ── 1. Parsear el CSV en headers + rows ─────────────────────────
+        csv_text = csv_path.read_text(encoding="utf-8-sig")
+        reader = csv.DictReader(io.StringIO(csv_text))
+        csv_headers = reader.fieldnames or []
+        csv_rows = list(reader)
+
+        if not csv_headers:
+            raise HTTPException(status_code=400, detail="CSV sin columnas")
+
+        # ── 2. Cargar metadata para field_catalog y format_groups ────────
         temp_metadata = _project_service.download_metadata_to_temp(metadata_storage_path)
         with open(temp_metadata, "r", encoding="utf-8") as f:
             metadata = json.load(f)
 
-        # Ejecutar validacion
-        from .core.validation import validate as run_validation
+        # ── 3. Ejecutar validacion en modo split ────────────────────────
+        from .core.validation import validate_csv
 
-        validation_data = metadata.get("validation", {})
-        report_data = run_validation(
-            parsed_model=metadata.get("parsed_model", {"structure": {}}),
-            processed_data=metadata,
-            columns=[],
+        report_data = validate_csv(
+            csv_headers=csv_headers,
+            csv_rows=csv_rows,
             field_catalog=metadata.get("field_catalog", {}),
             target_countries=version.get("country_codes"),
             format_groups=metadata.get("format_groups", {}),
             language_code=version.get("language_code", "en-us"),
-            upload_filename=csv_path.name,
-            upload_size_bytes=csv_path.stat().st_size,
         )
 
         summary = report_data.summary()
