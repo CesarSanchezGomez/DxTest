@@ -30,6 +30,9 @@ class ProcessRequest(BaseModel):
     language_code: str = Field(default="en-US", pattern=r"^[a-zA-Z]{2}(-[a-zA-Z]{2,})?$")
     country_codes: Optional[list[str]] = None
     excluded_entities: Optional[list[str]] = None
+    # Versionado
+    instance_number: str = Field(..., min_length=1, max_length=50)
+    client_name: str = Field(..., min_length=1, max_length=100)
 
 
 class ProcessResponse(BaseModel):
@@ -39,11 +42,13 @@ class ProcessResponse(BaseModel):
     processing_time: float = 0
     download_id: Optional[str] = None
     countries_processed: Optional[list[str]] = None
+    version_number: Optional[int] = None
+    instance_number: Optional[str] = None
+    client_name: Optional[str] = None
 
 
 class SplitRequest(BaseModel):
-    csv_file_id: str
-    metadata_file_id: str
+    version_id: str
 
 
 class SplitResponse(BaseModel):

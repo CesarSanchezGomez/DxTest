@@ -45,6 +45,84 @@ document.addEventListener('DOMContentLoaded', function () {
     var availableEntities = [];
     var excludedEntities = [];
 
+    // ─── Project state ───────────────────────────────────────────────
+    var projectMode = 'new'; // 'new' | 'existing'
+    var existingProjects = [];
+    var selectedProject = null;
+
+    var btnNewProject = document.getElementById('btnNewProject');
+    var btnExistingProject = document.getElementById('btnExistingProject');
+    var newProjectSection = document.getElementById('newProjectSection');
+    var existingProjectSection = document.getElementById('existingProjectSection');
+    var existingProjectSelect = document.getElementById('existingProjectSelect');
+    var projectHelper = document.getElementById('projectHelper');
+    var instanceNumberInput = document.getElementById('instanceNumber');
+    var clientNameInput = document.getElementById('clientName');
+
+    btnNewProject.addEventListener('click', function () {
+        projectMode = 'new';
+        btnNewProject.className = 'btn btn-primary';
+        btnExistingProject.className = 'btn btn-outline';
+        newProjectSection.style.display = '';
+        existingProjectSection.style.display = 'none';
+        selectedProject = null;
+    });
+
+    btnExistingProject.addEventListener('click', function () {
+        projectMode = 'existing';
+        btnExistingProject.className = 'btn btn-primary';
+        btnNewProject.className = 'btn btn-outline';
+        newProjectSection.style.display = 'none';
+        existingProjectSection.style.display = '';
+        loadExistingProjects();
+    });
+
+    existingProjectSelect.addEventListener('change', function () {
+        var idx = parseInt(this.value, 10);
+        selectedProject = !isNaN(idx) ? existingProjects[idx] : null;
+        if (selectedProject && projectHelper) {
+            projectHelper.textContent = selectedProject.total_versions + ' version(es)';
+            projectHelper.style.color = 'var(--color-success)';
+        }
+    });
+
+    async function loadExistingProjects() {
+        try {
+            var response = await fetch(API_BASE + '/projects', { credentials: 'include' });
+            var data = await response.json();
+            existingProjects = data.projects || [];
+            existingProjectSelect.innerHTML = '';
+            if (existingProjects.length === 0) {
+                existingProjectSelect.innerHTML = '<option value="">No hay proyectos</option>';
+                if (projectHelper) { projectHelper.textContent = 'Crea un proyecto primero'; projectHelper.style.color = 'var(--color-gray-dark)'; }
+                return;
+            }
+            existingProjects.forEach(function (p, i) {
+                var opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = p.instance_number + ' - ' + p.client_name + ' (v' + p.latest_version + ')';
+                existingProjectSelect.appendChild(opt);
+            });
+            selectedProject = existingProjects[0];
+            if (projectHelper) {
+                projectHelper.textContent = existingProjects.length + ' proyecto(s) disponible(s)';
+                projectHelper.style.color = 'var(--color-success)';
+            }
+        } catch (e) {
+            existingProjectSelect.innerHTML = '<option value="">Error cargando proyectos</option>';
+        }
+    }
+
+    function getProjectInfo() {
+        if (projectMode === 'existing' && selectedProject) {
+            return { instance_number: selectedProject.instance_number, client_name: selectedProject.client_name };
+        }
+        var inst = instanceNumberInput.value.trim();
+        var client = clientNameInput.value.trim();
+        if (!inst || !client) return null;
+        return { instance_number: inst, client_name: client };
+    }
+
     var XML_VALIDATORS = {
         sdm: function (c) { return c.includes('<succession-data-model'); },
         csf_sdm: function (c) { return c.includes('<country-specific-fields') && c.includes('<format-group'); }
@@ -182,13 +260,15 @@ document.addEventListener('DOMContentLoaded', function () {
         return result.countries;
     }
 
-    async function processFiles(mainFileId, csfId, languageCode, countryCodes, excludedEnts) {
+    async function processFiles(mainFileId, csfId, languageCode, countryCodes, excludedEnts, projectInfo) {
         var payload = {
             main_file_id: mainFileId,
             csf_file_id: csfId || null,
             language_code: languageCode,
             country_codes: countryCodes && countryCodes.length > 0 ? countryCodes : null,
-            excluded_entities: excludedEnts && excludedEnts.length > 0 ? excludedEnts : null
+            excluded_entities: excludedEnts && excludedEnts.length > 0 ? excludedEnts : null,
+            instance_number: projectInfo.instance_number,
+            client_name: projectInfo.client_name
         };
 
         var response = await fetch(API_BASE + '/process', {
@@ -619,6 +699,12 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        var projectInfo = getProjectInfo();
+        if (!projectInfo) {
+            showToast('Completa la informacion del proyecto (instancia y cliente)', 'error');
+            return;
+        }
+
         submitBtn.disabled = true;
         var originalText = submitBtn.textContent;
         submitBtn.textContent = 'Procesando...';
@@ -627,7 +713,7 @@ document.addEventListener('DOMContentLoaded', function () {
             showLoader(true, 'Procesando archivos...');
             var countriesToSend = csfFileId ? selectedCountries : null;
             var excludedToSend = excludedEntities.length > 0 ? excludedEntities : null;
-            var result = await processFiles(uploadedMainFileId, csfFileId, languageCode, countriesToSend, excludedToSend);
+            var result = await processFiles(uploadedMainFileId, csfFileId, languageCode, countriesToSend, excludedToSend, projectInfo);
             showLoader(false);
             displayResult(result);
         } catch (error) {
@@ -645,8 +731,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function displayResult(processResult) {
         var downloadId = processResult.download_id;
+        var versionLabel = processResult.version_number
+            ? processResult.instance_number + ' - ' + processResult.client_name + ' v' + processResult.version_number
+            : '';
 
         resultInfo.innerHTML =
+            (versionLabel ? '<p style="margin-bottom: var(--spacing-md); font-weight: 600;">' + versionLabel + '</p>' : '') +
             '<div class="form-grid-3" style="margin-bottom: var(--spacing-md);">' +
                 '<div class="form-group">' +
                     '<label>Campos:</label>' +

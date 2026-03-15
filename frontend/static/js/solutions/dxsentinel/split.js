@@ -3,14 +3,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var API_BASE = '/api/dxsentinel';
 
-    var splitForm = document.getElementById('splitForm');
+    var projectSelect = document.getElementById('projectSelect');
+    var versionSelect = document.getElementById('versionSelect');
+    var versionHelper = document.getElementById('versionHelper');
     var splitBtn = document.getElementById('splitBtn');
     var statusDiv = document.getElementById('status');
     var resultCard = document.getElementById('resultCard');
     var resultInfo = document.getElementById('resultInfo');
 
-    var csvFileId = null;
-    var metadataFileId = null;
+    var projects = [];
+    var versions = [];
+    var selectedVersionId = null;
 
     // ── Utilidades ───────────────────────────────────────────────────────
 
@@ -53,138 +56,111 @@ document.addEventListener('DOMContentLoaded', function () {
         statusDiv.innerHTML = message;
     }
 
-    function updateSplitButton() {
-        splitBtn.disabled = !(csvFileId && metadataFileId);
-    }
+    // ── Load projects ────────────────────────────────────────────────────
 
-    // ── API calls ────────────────────────────────────────────────────────
-
-    async function uploadSplitFile(file) {
-        var formData = new FormData();
-        formData.append('file', file);
-
-        var response = await fetch(API_BASE + '/split/upload', {
-            method: 'POST', body: formData, credentials: 'include'
-        });
-        if (!response.ok) {
-            var err = await response.json();
-            throw new Error(err.detail || 'Upload failed');
-        }
-        var result = await response.json();
-        if (!result.success) throw new Error(result.message || 'Upload failed');
-        return result.file_id;
-    }
-
-    async function processSplit(csvId, metaId) {
-        var response = await fetch(API_BASE + '/split/process', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ csv_file_id: csvId, metadata_file_id: metaId }),
-            credentials: 'include'
-        });
-        if (!response.ok) {
-            var err = await response.json();
-            throw new Error(err.detail || 'Split failed');
-        }
-        var result = await response.json();
-        if (!result.success) throw new Error(result.message || 'Split failed');
-        return result;
-    }
-
-    async function deleteFile(fileId) {
-        if (!fileId) return;
+    async function loadProjects() {
         try {
-            await fetch(API_BASE + '/upload/' + fileId, { method: 'DELETE', credentials: 'include' });
-        } catch (e) { /* ignore */ }
+            var response = await fetch(API_BASE + '/projects', { credentials: 'include' });
+            var data = await response.json();
+            projects = data.projects || [];
+
+            projectSelect.innerHTML = '';
+            if (projects.length === 0) {
+                projectSelect.innerHTML = '<option value="">No hay proyectos disponibles</option>';
+                return;
+            }
+
+            var defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = 'Selecciona un proyecto...';
+            projectSelect.appendChild(defaultOpt);
+
+            projects.forEach(function (p, i) {
+                var opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = p.instance_number + ' - ' + p.client_name + ' (' + p.total_versions + ' versiones)';
+                projectSelect.appendChild(opt);
+            });
+        } catch (e) {
+            projectSelect.innerHTML = '<option value="">Error cargando proyectos</option>';
+            showToast('Error cargando proyectos', 'error');
+        }
     }
 
-    // ── File handlers ────────────────────────────────────────────────────
+    // ── Load versions ────────────────────────────────────────────────────
 
-    document.getElementById('csvFile').addEventListener('change', async function (e) {
-        var file = e.target.files[0];
-        var display = document.getElementById('csvFileName');
-
-        if (!file) {
-            display.textContent = 'Ningun archivo seleccionado';
-            display.style.color = '';
-            if (csvFileId) { await deleteFile(csvFileId); csvFileId = null; }
-            updateSplitButton();
-            return;
-        }
-
-        if (!file.name.toLowerCase().endsWith('.csv')) {
-            display.textContent = 'El archivo debe ser CSV';
-            display.style.color = 'var(--color-error)';
-            e.target.value = '';
-            showToast('Solo se aceptan archivos CSV', 'error');
-            return;
-        }
-
-        display.textContent = 'Subiendo ' + file.name + '...';
-        display.style.color = '';
+    async function loadVersions(project) {
+        versionSelect.innerHTML = '<option value="">Cargando versiones...</option>';
+        versionSelect.disabled = true;
+        splitBtn.disabled = true;
+        selectedVersionId = null;
 
         try {
-            if (csvFileId) await deleteFile(csvFileId);
-            csvFileId = await uploadSplitFile(file);
-            display.textContent = file.name;
-            display.style.color = 'var(--color-success)';
-            showToast('CSV cargado correctamente', 'success');
-        } catch (error) {
-            display.textContent = error.message;
-            display.style.color = 'var(--color-error)';
-            csvFileId = null;
-            e.target.value = '';
-            showToast(error.message, 'error');
+            var url = API_BASE + '/versions/' + encodeURIComponent(project.instance_number) + '/' + encodeURIComponent(project.client_name);
+            var response = await fetch(url, { credentials: 'include' });
+            var data = await response.json();
+            versions = data.versions || [];
+
+            versionSelect.innerHTML = '';
+            if (versions.length === 0) {
+                versionSelect.innerHTML = '<option value="">No hay versiones</option>';
+                if (versionHelper) { versionHelper.textContent = 'Genera un Golden Record primero'; versionHelper.style.color = 'var(--color-gray-dark)'; }
+                return;
+            }
+
+            versions.forEach(function (v, i) {
+                var opt = document.createElement('option');
+                opt.value = i;
+                var countries = v.country_codes ? ' [' + v.country_codes.join(', ') + ']' : '';
+                opt.textContent = 'v' + v.version_number + ' - ' + v.language_code + countries + ' (' + (v.field_count || 0) + ' campos)';
+                versionSelect.appendChild(opt);
+            });
+
+            versionSelect.disabled = false;
+            selectedVersionId = versions[0].id;
+            splitBtn.disabled = false;
+
+            if (versionHelper) {
+                versionHelper.textContent = versions.length + ' version(es) disponible(s)';
+                versionHelper.style.color = 'var(--color-success)';
+            }
+        } catch (e) {
+            versionSelect.innerHTML = '<option value="">Error cargando versiones</option>';
+            showToast('Error cargando versiones', 'error');
         }
-        updateSplitButton();
+    }
+
+    // ── Event listeners ──────────────────────────────────────────────────
+
+    projectSelect.addEventListener('change', function () {
+        var idx = parseInt(this.value, 10);
+        if (isNaN(idx)) {
+            versionSelect.innerHTML = '<option value="">Selecciona un proyecto primero</option>';
+            versionSelect.disabled = true;
+            splitBtn.disabled = true;
+            selectedVersionId = null;
+            if (versionHelper) versionHelper.textContent = '';
+            return;
+        }
+        loadVersions(projects[idx]);
     });
 
-    document.getElementById('metadataFile').addEventListener('change', async function (e) {
-        var file = e.target.files[0];
-        var display = document.getElementById('metadataFileName');
-
-        if (!file) {
-            display.textContent = 'Ningun archivo seleccionado';
-            display.style.color = '';
-            if (metadataFileId) { await deleteFile(metadataFileId); metadataFileId = null; }
-            updateSplitButton();
-            return;
+    versionSelect.addEventListener('change', function () {
+        var idx = parseInt(this.value, 10);
+        if (!isNaN(idx) && versions[idx]) {
+            selectedVersionId = versions[idx].id;
+            splitBtn.disabled = false;
+        } else {
+            selectedVersionId = null;
+            splitBtn.disabled = true;
         }
-
-        if (!file.name.toLowerCase().endsWith('.json')) {
-            display.textContent = 'El archivo debe ser JSON';
-            display.style.color = 'var(--color-error)';
-            e.target.value = '';
-            showToast('Solo se aceptan archivos JSON', 'error');
-            return;
-        }
-
-        display.textContent = 'Subiendo ' + file.name + '...';
-        display.style.color = '';
-
-        try {
-            if (metadataFileId) await deleteFile(metadataFileId);
-            metadataFileId = await uploadSplitFile(file);
-            display.textContent = file.name;
-            display.style.color = 'var(--color-success)';
-            showToast('Metadata cargado correctamente', 'success');
-        } catch (error) {
-            display.textContent = error.message;
-            display.style.color = 'var(--color-error)';
-            metadataFileId = null;
-            e.target.value = '';
-            showToast(error.message, 'error');
-        }
-        updateSplitButton();
     });
 
-    // ── Form submit ──────────────────────────────────────────────────────
+    // ── Split ────────────────────────────────────────────────────────────
 
-    splitForm.addEventListener('submit', async function (e) {
-        e.preventDefault();
-
-        if (!csvFileId || !metadataFileId) {
-            showToast('Sube ambos archivos (CSV y JSON)', 'error');
+    splitBtn.addEventListener('click', async function () {
+        if (!selectedVersionId) {
+            showToast('Selecciona una version', 'error');
             return;
         }
 
@@ -194,7 +170,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             showLoader(true, 'Dividiendo Golden Record en templates...');
-            var result = await processSplit(csvFileId, metadataFileId);
+
+            var response = await fetch(API_BASE + '/split/process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ version_id: selectedVersionId }),
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                var err = await response.json();
+                throw new Error(err.detail || 'Split failed');
+            }
+
+            var result = await response.json();
+            if (!result.success) throw new Error(result.message || 'Split failed');
+
             showLoader(false);
             displayResult(result);
         } catch (error) {
@@ -205,7 +196,6 @@ document.addEventListener('DOMContentLoaded', function () {
         } finally {
             splitBtn.disabled = false;
             splitBtn.textContent = originalText;
-            updateSplitButton();
         }
     });
 
@@ -235,4 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
         resultCard.style.display = 'block';
         statusDiv.style.display = 'none';
     }
+
+    // ── Init ─────────────────────────────────────────────────────────────
+    loadProjects();
 });

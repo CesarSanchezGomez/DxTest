@@ -13,30 +13,39 @@
 </div>
 
 <div class="cards-stack">
-    <div class="card">
-        <div class="card-header">
-            <h3>Archivos de Entrada</h3>
-        </div>
-        <div class="card-body">
-            <form id="splitForm">
+    <div class="cards-grid">
+        <div class="card">
+            <div class="card-header">
+                <h3>Proyecto</h3>
+            </div>
+            <div class="card-body">
                 <div class="form-group">
-                    <label for="csvFile">Golden Record (CSV):</label>
-                    <input type="file" id="csvFile" class="file-input" accept=".csv" required>
-                    <label for="csvFile" class="file-label">Seleccionar CSV</label>
-                    <span class="file-name" id="csvFileName">Ningun archivo seleccionado</span>
+                    <label for="projectSelect">Seleccionar Proyecto:</label>
+                    <select id="projectSelect" class="search-input" style="cursor: pointer;">
+                        <option value="">Cargando proyectos...</option>
+                    </select>
                 </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>Version</h3>
+            </div>
+            <div class="card-body">
                 <div class="form-group">
-                    <label for="metadataFile">Metadata (JSON):</label>
-                    <input type="file" id="metadataFile" class="file-input" accept=".json" required>
-                    <label for="metadataFile" class="file-label">Seleccionar JSON</label>
-                    <span class="file-name" id="metadataFileName">Ningun archivo seleccionado</span>
+                    <label for="versionSelect">Seleccionar Version:</label>
+                    <select id="versionSelect" class="search-input" disabled style="cursor: pointer;">
+                        <option value="">Selecciona un proyecto primero</option>
+                    </select>
+                    <span class="file-name" id="versionHelper"></span>
                 </div>
                 <div class="card-actions">
-                    <button type="submit" id="splitBtn" class="btn btn-primary" disabled>
+                    <button type="button" id="splitBtn" class="btn btn-primary" disabled>
                         Dividir Golden Record
                     </button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 

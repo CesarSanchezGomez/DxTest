@@ -8,9 +8,14 @@ from .models import (
     SplitRequest, SplitResponse,
 )
 from .services import FileService, ProcessingService, SplitService, MAX_UPLOAD_SIZE, MAX_CSV_UPLOAD_SIZE
+from .project_service import ProjectService
 
 router = APIRouter(prefix="/api/dxsentinel", tags=["dxsentinel"])
 
+_project_service = ProjectService()
+
+
+# ── File upload/management ───────────────────────────────────────────────
 
 @router.post("/upload", response_model=UploadResponse)
 async def upload_file(file: UploadFile = File(...), user=Depends(get_current_user)):
@@ -67,6 +72,16 @@ async def extract_countries(file_id: str, user=Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=f"Error extrayendo paises: {str(e)}")
 
 
+@router.delete("/upload/{file_id}")
+async def delete_uploaded_file(file_id: str, user=Depends(get_current_user)):
+    deleted = FileService.delete_file(file_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Archivo no encontrado")
+    return {"success": True, "message": "Archivo eliminado"}
+
+
+# ── Process (Golden Record generation) ───────────────────────────────────
+
 @router.post("/process", response_model=ProcessResponse)
 async def process_files(request: ProcessRequest, user=Depends(get_current_user)):
     main_path = FileService.get_path(request.main_file_id)
@@ -79,7 +94,19 @@ async def process_files(request: ProcessRequest, user=Depends(get_current_user))
         if not csf_path:
             raise HTTPException(status_code=404, detail="Archivo CSF no encontrado")
 
+    consultant_email = user.email
+
     try:
+        # 1. Crear proyecto + version en Supabase
+        project, version, version_number = _project_service.create_version(
+            consultant_email=consultant_email,
+            instance_number=request.instance_number,
+            client_name=request.client_name,
+            language_code=request.language_code,
+            country_codes=request.country_codes,
+        )
+
+        # 2. Procesar archivos
         result = ProcessingService.process(
             main_file_path=main_path,
             csf_file_path=csf_path,
@@ -87,6 +114,17 @@ async def process_files(request: ProcessRequest, user=Depends(get_current_user))
             country_codes=request.country_codes,
             excluded_entities=request.excluded_entities,
         )
+
+        # 3. Actualizar version con paths de archivos
+        _project_service.update_version_paths(
+            version_id=version["id"],
+            csv_path=result["output_file"],
+            metadata_path=result["metadata_file"],
+            report_path=result.get("report_file"),
+            zip_path=result.get("zip_file"),
+            field_count=result["field_count"],
+        )
+
         return ProcessResponse(
             success=True,
             message="Procesamiento completado",
@@ -94,6 +132,9 @@ async def process_files(request: ProcessRequest, user=Depends(get_current_user))
             processing_time=result["processing_time"],
             download_id=result["download_id"],
             countries_processed=result.get("countries_processed"),
+            version_number=version_number,
+            instance_number=project["instance_number"],
+            client_name=project["client_name"],
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error procesando: {str(e)}")
@@ -112,15 +153,25 @@ async def download_result(download_id: str, user=Depends(get_current_user)):
     )
 
 
-@router.delete("/upload/{file_id}")
-async def delete_uploaded_file(file_id: str, user=Depends(get_current_user)):
-    deleted = FileService.delete_file(file_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Archivo no encontrado")
-    return {"success": True, "message": "Archivo eliminado"}
+# ── Projects & Versions ─────────────────────────────────────────────────
+
+@router.get("/projects")
+async def list_projects(user=Depends(get_current_user)):
+    projects = _project_service.list_projects(user.email)
+    return {"success": True, "projects": projects}
 
 
-# ── Split endpoints ──────────────────────────────────────────────────────
+@router.get("/versions/{instance_number}/{client_name}")
+async def list_versions(instance_number: str, client_name: str, user=Depends(get_current_user)):
+    versions = _project_service.list_versions(
+        consultant_email=user.email,
+        instance_number=instance_number,
+        client_name=client_name,
+    )
+    return {"success": True, "versions": versions}
+
+
+# ── Split ────────────────────────────────────────────────────────────────
 
 @router.post("/split/upload", response_model=UploadResponse)
 async def split_upload(file: UploadFile = File(...), user=Depends(get_current_user)):
@@ -143,16 +194,29 @@ async def split_upload(file: UploadFile = File(...), user=Depends(get_current_us
 
 @router.post("/split/process", response_model=SplitResponse)
 async def split_process(request: SplitRequest, user=Depends(get_current_user)):
-    csv_path = FileService.get_path(request.csv_file_id)
-    if not csv_path:
-        raise HTTPException(status_code=404, detail="Archivo CSV no encontrado")
+    # Obtener version y validar que pertenece al usuario
+    version = _project_service.get_version(request.version_id)
+    if not version:
+        raise HTTPException(status_code=404, detail="Version no encontrada")
 
-    metadata_path = FileService.get_path(request.metadata_file_id)
-    if not metadata_path:
-        raise HTTPException(status_code=404, detail="Archivo metadata no encontrado")
+    project = version.get("projects", {})
+    if project.get("consultant_email") != user.email:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    csv_path = version.get("csv_storage_path")
+    metadata_path = version.get("metadata_storage_path")
+
+    if not csv_path or not metadata_path:
+        raise HTTPException(status_code=400, detail="Version sin archivos generados")
+
+    from pathlib import Path as _Path
+    if not _Path(csv_path).exists():
+        raise HTTPException(status_code=404, detail="Archivo CSV no encontrado en disco")
+    if not _Path(metadata_path).exists():
+        raise HTTPException(status_code=404, detail="Archivo metadata no encontrado en disco")
 
     try:
-        result = SplitService.split(csv_path, metadata_path)
+        result = SplitService.split(_Path(csv_path), _Path(metadata_path))
         return SplitResponse(
             success=True,
             message="Split completado",

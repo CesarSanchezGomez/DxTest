@@ -14,6 +14,37 @@
 </div>
 
 <div class="cards-stack">
+    <div class="card">
+        <div class="card-header">
+            <h3>Proyecto</h3>
+        </div>
+        <div class="card-body">
+            <div style="display: flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-md);">
+                <button type="button" id="btnNewProject" class="btn btn-primary" style="flex: 1;">Nuevo Proyecto</button>
+                <button type="button" id="btnExistingProject" class="btn btn-outline" style="flex: 1;">Proyecto Existente</button>
+            </div>
+            <div id="newProjectSection">
+                <div class="form-group">
+                    <label for="instanceNumber">Numero de Instancia:</label>
+                    <input type="text" id="instanceNumber" class="search-input" placeholder="Ej: ProductosfT1" required>
+                </div>
+                <div class="form-group">
+                    <label for="clientName">Nombre del Cliente:</label>
+                    <input type="text" id="clientName" class="search-input" placeholder="Ej: Dxgrow" required>
+                </div>
+            </div>
+            <div id="existingProjectSection" style="display: none;">
+                <div class="form-group">
+                    <label for="existingProjectSelect">Seleccionar Proyecto:</label>
+                    <select id="existingProjectSelect" class="search-input" style="cursor: pointer;">
+                        <option value="">Cargando proyectos...</option>
+                    </select>
+                    <span class="file-name" id="projectHelper"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="cards-grid">
         <div class="card">
             <div class="card-header">
