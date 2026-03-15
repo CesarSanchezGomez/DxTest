@@ -10,6 +10,9 @@ from .models import (
 from .services import FileService, ProcessingService, SplitService, MAX_UPLOAD_SIZE, MAX_CSV_UPLOAD_SIZE
 from .project_service import ProjectService
 
+import logging
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/dxsentinel", tags=["dxsentinel"])
 
 _project_service = ProjectService()
@@ -117,13 +120,14 @@ async def process_files(request: ProcessRequest, user=Depends(get_current_user))
 
         # 3. Subir outputs a Supabase Storage y guardar paths en DB
         from pathlib import Path as _Path
-        _project_service.store_outputs(
+        stored = _project_service.store_outputs(
             version=version,
             project=project,
             consultant_email=consultant_email,
             csv_path=_Path(result["output_file"]),
             metadata_path=_Path(result["metadata_file"]),
         )
+        logger.info("Storage paths saved: %s", stored)
 
         # 4. Limpiar archivos locales (ya estan en Supabase Storage)
         ProcessingService.cleanup_loose_files(result["download_id"])
@@ -211,6 +215,7 @@ async def split_process(request: SplitRequest, user=Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="No autorizado")
 
     metadata_storage_path = version.get("metadata_storage_path")
+    logger.info("Split - version_id=%s, metadata_storage_path=%s", request.version_id, metadata_storage_path)
     if not metadata_storage_path:
         raise HTTPException(status_code=400, detail="Version sin metadata generada")
 
