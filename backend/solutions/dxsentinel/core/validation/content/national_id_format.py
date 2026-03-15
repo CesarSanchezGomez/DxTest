@@ -43,9 +43,18 @@ class NationalIdFormatValidator(BaseValidator):
         if not nid_col:
             return issues
 
+        analyzer = ctx.get_entity_analyzer()
+        empty_global = ctx.get_empty_entities_global()
+
         for row_idx, row in enumerate(ctx.csv_rows, start=1):
             value = row.get(nid_col, "")
             if not value or not str(value).strip():
+                continue
+
+            # Skip entidades vacias
+            if _TARGET_ENTITY_ID in empty_global:
+                continue
+            if analyzer.is_entity_empty_for_row(row, _TARGET_ENTITY_ID):
                 continue
 
             row_index = row_idx + 2

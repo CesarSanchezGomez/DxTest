@@ -1,8 +1,12 @@
 """Validacion de campos required vacios en CSV → ERROR.
 
-Solo valida campos required que NO estan ya cubiertos por
-EntityCompletenessValidator (que maneja la regla de entidad parcial).
+Solo valida campos required que NO han sido cubiertos por
+EntityCompletenessValidator (que devuelve validated_columns).
+
 Respeta la regla: si la entidad completa esta vacia en la fila, no lanza error.
+
+NOTA: Este validator se ejecuta DESPUES de EntityCompletenessValidator
+y recibe las columnas ya validadas via ctx._validated_columns.
 """
 
 from __future__ import annotations
@@ -15,7 +19,7 @@ from .entity_analyzer import EntityAnalyzer
 
 @register_validator
 class RequiredFieldsValidator(BaseValidator):
-    """Verifica que campos required tengan valor, respetando regla de entidad vacia."""
+    """Verifica required fields no cubiertos por EntityCompletenessValidator."""
 
     modes = ("split",)
 
@@ -27,7 +31,10 @@ class RequiredFieldsValidator(BaseValidator):
 
         analyzer = EntityAnalyzer(ctx.field_catalog)
 
-        # Determinar entidades vacias globalmente
+        # Columnas ya validadas por EntityCompletenessValidator
+        already_validated = getattr(ctx, "_validated_columns", set())
+
+        # Entidades vacias globalmente
         empty_entities_global: set[str] = set()
         for entity_id in analyzer.get_entity_fields():
             if analyzer.is_entity_empty_globally(ctx.csv_rows, entity_id):
@@ -39,6 +46,12 @@ class RequiredFieldsValidator(BaseValidator):
             if entry.get("required") and fid in ctx.csv_headers
         }
 
+        # Excluir campos ya validados por EntityCompleteness
+        required_fields -= already_validated
+
+        if not required_fields:
+            return issues
+
         for row_idx, row in enumerate(ctx.csv_rows, start=1):
             row_index = row_idx + 2
             person_id = _extract_person_id(row)
@@ -47,20 +60,12 @@ class RequiredFieldsValidator(BaseValidator):
                 meta = ctx.field_catalog.get(col, {})
                 entity_id = meta.get("element", "")
 
-                # Skip entidades vacias globalmente
                 if entity_id in empty_entities_global:
                     continue
 
-                # Skip entidades vacias en esta fila (la regla especial)
                 if analyzer.is_entity_empty_for_row(row, entity_id):
                     continue
 
-                # Si llegamos aqui, la entidad tiene datos en esta fila
-                # EntityCompletenessValidator ya cubre los required dentro de
-                # entidades parcialmente llenas. Este validator cubre el caso
-                # donde la entidad NO esta parcialmente llena pero el campo
-                # required esta vacio (edge case que no deberia ocurrir si
-                # EntityCompleteness ya lo cubrio, pero por seguridad).
                 value = row.get(col)
                 if value is None or (isinstance(value, str) and value.strip() == ""):
                     issues.append(self._emit(

@@ -72,6 +72,7 @@ class ValidateResponse(BaseModel):
     can_split: bool = False
     summary: dict = {}
     issues: list[ValidationIssue] = []
+    errors_by_entity: dict = {}
 
 
 class SplitRequest(BaseModel):

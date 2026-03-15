@@ -136,7 +136,7 @@ class Messages:
             "persona moral AAA######AAA (12 chars)"
         ),
         "WORK_PERMIT_NSS_INVALID": "NSS en posicion {position} no tiene formato valido. Esperado: 11 digitos numericos",
-        "WORK_PERMIT_UNKNOWN_TYPE": "Tipo de documento desconocido en posicion {position}: '{value}'",
+        "WORK_PERMIT_UNKNOWN_TYPE": "Tipo de documento desconocido en posicion {position}: '{doc_type}'",
 
         # ── engine ───────────────────────────────────────────────────────
         "ENGINE_001": "Validator '{validator}' fallo: {error}",

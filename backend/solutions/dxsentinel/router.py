@@ -262,6 +262,14 @@ async def split_validate(request: ValidateRequest, user=Depends(get_current_user
         summary = report_data.summary()
         issues = [r.to_dict() for r in report_data.results]
 
+        # Agrupar errores por entidad para el frontend
+        errors_by_entity = {}
+        for r in report_data.results:
+            entity = r.element_id or "general"
+            if entity not in errors_by_entity:
+                errors_by_entity[entity] = []
+            errors_by_entity[entity].append(r.to_dict())
+
         if report_data.has_fatal:
             message = "Errores fatales: no se puede dividir"
         elif report_data.has_errors:
@@ -277,6 +285,7 @@ async def split_validate(request: ValidateRequest, user=Depends(get_current_user
             can_split=report_data.can_split,
             summary=summary,
             issues=issues,
+            errors_by_entity=errors_by_entity,
         )
     except HTTPException:
         raise

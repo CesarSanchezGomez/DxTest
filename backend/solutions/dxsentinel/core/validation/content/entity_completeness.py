@@ -34,6 +34,9 @@ class EntityCompletenessValidator(BaseValidator):
             if analyzer.is_entity_empty_globally(ctx.csv_rows, entity_id):
                 empty_entities_global.add(entity_id)
 
+        # Track columnas validadas para que RequiredFieldsValidator no duplique
+        validated_columns: set[str] = set()
+
         for row_idx, row in enumerate(ctx.csv_rows, start=1):
             person_id = _extract_person_id(row)
             row_index = row_idx + 2  # +2: fila 1=headers, 2=labels
@@ -87,6 +90,11 @@ class EntityCompletenessValidator(BaseValidator):
                             filled=filled_display,
                             missing=missing_display,
                         ))
+
+                        validated_columns.add(col)
+
+        # Guardar columnas validadas en el contexto para RequiredFieldsValidator
+        ctx._validated_columns = validated_columns
 
         return issues
 

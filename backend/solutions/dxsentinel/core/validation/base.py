@@ -34,6 +34,23 @@ class ValidationContext:
     mode: str = "generation"
     """Modo de validacion: 'generation' (XML) o 'split' (CSV)."""
 
+    def get_entity_analyzer(self):
+        """EntityAnalyzer cacheado para reusar entre validators."""
+        if not hasattr(self, "_entity_analyzer"):
+            from .content.entity_analyzer import EntityAnalyzer
+            self._entity_analyzer = EntityAnalyzer(self.field_catalog)
+        return self._entity_analyzer
+
+    def get_empty_entities_global(self) -> set:
+        """Entidades vacias globalmente, cacheadas."""
+        if not hasattr(self, "_empty_entities_global"):
+            analyzer = self.get_entity_analyzer()
+            self._empty_entities_global = {
+                eid for eid in analyzer.get_entity_fields()
+                if analyzer.is_entity_empty_globally(self.csv_rows, eid)
+            }
+        return self._empty_entities_global
+
 
 class BaseValidator(ABC):
     """Contrato base con helper para emitir resultados."""

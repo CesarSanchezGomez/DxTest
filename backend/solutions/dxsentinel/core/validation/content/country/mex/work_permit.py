@@ -125,7 +125,7 @@ class WorkPermitValidator(BaseValidator):
                     Severity.ERROR, "WORK_PERMIT_UNKNOWN_TYPE",
                     element_id=_TARGET_ENTITY, field_id="document-type",
                     row_index=row_index, person_id=person_id,
-                    value=doc_type, position=position,
+                    value=doc_type, position=position, doc_type=doc_type,
                 ))
 
         return errors

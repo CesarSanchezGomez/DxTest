@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function displayValidation(result) {
         var summary = result.summary || {};
-        var issues = result.issues || [];
+        var errorsByEntity = result.errors_by_entity || {};
         validationPassed = result.can_split;
 
         // Summary badges
@@ -295,23 +295,46 @@ document.addEventListener('DOMContentLoaded', function () {
         html += '<span style="margin-left: auto; font-weight: 400;">' + result.message + '</span>';
         html += '</div>';
 
-        // Issues table
-        if (issues.length > 0) {
-            html += '<div class="validation-issues"><table>';
-            html += '<thead><tr><th>Severidad</th><th>Codigo</th><th>Mensaje</th><th>Entidad</th><th>Campo</th></tr></thead>';
-            html += '<tbody>';
-            for (var i = 0; i < issues.length; i++) {
-                var issue = issues[i];
-                var sevClass = 'sev-' + issue.severity;
-                html += '<tr>';
-                html += '<td class="' + sevClass + '">' + issue.severity.toUpperCase() + '</td>';
-                html += '<td>' + issue.code + '</td>';
-                html += '<td>' + issue.message + '</td>';
-                html += '<td>' + (issue.element_id || '-') + '</td>';
-                html += '<td>' + (issue.field_id || '-') + '</td>';
-                html += '</tr>';
+        // Issues grouped by entity
+        var entities = Object.keys(errorsByEntity);
+        if (entities.length > 0) {
+            html += '<div class="validation-issues">';
+
+            for (var e = 0; e < entities.length; e++) {
+                var entityId = entities[e];
+                var entityIssues = errorsByEntity[entityId];
+
+                html += '<div class="entity-section">';
+                html += '<div class="entity-header">';
+                html += '<span>' + entityId + '</span>';
+                html += '<span class="entity-count">' + entityIssues.length + ' error(es)</span>';
+                html += '</div>';
+                html += '<table>';
+                html += '<thead><tr>';
+                html += '<th>Fila</th><th>Campo</th><th>Severidad</th><th>Error</th><th>Valor</th><th>Person ID</th>';
+                html += '</tr></thead><tbody>';
+
+                for (var i = 0; i < entityIssues.length; i++) {
+                    var issue = entityIssues[i];
+                    var sevClass = 'sev-' + issue.severity;
+                    var rowDisplay = issue.row_index != null ? issue.row_index : '-';
+                    var valueDisplay = issue.value ? '<span class="val-value">' + escapeHtml(issue.value) + '</span>' : '-';
+                    var pidDisplay = issue.person_id || '-';
+
+                    html += '<tr>';
+                    html += '<td>' + rowDisplay + '</td>';
+                    html += '<td>' + (issue.field_id || '-') + '</td>';
+                    html += '<td class="' + sevClass + '">' + issue.severity.toUpperCase() + '</td>';
+                    html += '<td>' + issue.message + '</td>';
+                    html += '<td>' + valueDisplay + '</td>';
+                    html += '<td>' + pidDisplay + '</td>';
+                    html += '</tr>';
+                }
+
+                html += '</tbody></table></div>';
             }
-            html += '</tbody></table></div>';
+
+            html += '</div>';
         }
 
         validationContent.innerHTML = html;
@@ -325,6 +348,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         updateButtons();
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     // ── Split ────────────────────────────────────────────────────────────

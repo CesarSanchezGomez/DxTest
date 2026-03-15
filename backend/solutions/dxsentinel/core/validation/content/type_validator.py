@@ -30,6 +30,8 @@ class TypeValidator(BaseValidator):
             return issues
 
         country_codes = ctx.target_countries or []
+        analyzer = ctx.get_entity_analyzer()
+        empty_global = ctx.get_empty_entities_global()
 
         for row_idx, row in enumerate(ctx.csv_rows, start=1):
             row_index = row_idx + 2
@@ -47,6 +49,13 @@ class TypeValidator(BaseValidator):
                     continue
 
                 entity_id = meta.get("element", "")
+
+                # Skip entidades vacias
+                if entity_id in empty_global:
+                    continue
+                if analyzer.is_entity_empty_for_row(row, entity_id):
+                    continue
+
                 field_id = meta.get("field", "")
                 is_multi = entity_id in _MULTI_VALUE_ENTITIES
 

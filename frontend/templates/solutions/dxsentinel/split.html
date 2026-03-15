@@ -16,18 +16,31 @@
     .validation-summary .badge-warning { background: #FBC02D; color: #1a1a1a; }
     .validation-summary .badge-ok { background: var(--color-success); color: #fff; }
     .validation-issues {
-        max-height: 300px; overflow-y: auto;
+        max-height: 500px; overflow-y: auto;
         margin-top: var(--sp-3); font-size: 12px;
+    }
+    .entity-section { margin-bottom: var(--sp-4); }
+    .entity-header {
+        font-weight: 700; font-size: 13px; padding: var(--sp-2) var(--sp-3);
+        background: var(--surface-3); border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .entity-header .entity-count {
+        font-weight: 400; font-size: 11px; color: var(--text-secondary);
     }
     .validation-issues table { width: 100%; border-collapse: collapse; }
     .validation-issues th {
         text-align: left; padding: var(--sp-2) var(--sp-3);
         background: var(--surface-2); font-weight: 600; position: sticky; top: 0;
     }
-    .validation-issues td { padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--surface-2); }
+    .validation-issues td {
+        padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--surface-2);
+        max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
     .sev-fatal { color: #D32F2F; font-weight: 700; }
     .sev-error { color: #F57C00; font-weight: 700; }
     .sev-warning { color: #FBC02D; font-weight: 600; }
+    .val-value { font-family: monospace; font-size: 11px; color: var(--text-secondary); }
     .btn-validate {
         background: var(--surface-3); color: var(--text-primary);
         border: 1px solid var(--surface-3);
