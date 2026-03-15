@@ -1,1 +1,3 @@
-"""Validadores de estructura — producen severidad FATAL."""
+from .csv_structure_validator import CsvStructureValidator
+
+__all__ = ['CsvStructureValidator']

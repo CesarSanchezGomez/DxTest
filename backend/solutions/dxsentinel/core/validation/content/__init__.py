@@ -1,1 +1,3 @@
-"""Validadores de contenido — producen severidad ERROR o WARNING."""
+from .golden_record_validator import GoldenRecordValidator
+
+__all__ = ['GoldenRecordValidator']
