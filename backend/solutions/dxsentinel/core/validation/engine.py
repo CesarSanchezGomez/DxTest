@@ -17,15 +17,23 @@ _PHASE_ORDER = [
     "UploadValidator",
     "XMLStructureValidator",
     "CharacterStructureValidator",
-    # content/ (ambos modos, segun su .modes)
+    # content/ generation-only
     "FieldRulesValidator",
     "FieldFilterValidator",
     "FormatGroupValidator",
     "LabelValidator",
-    # csv data validators (solo mode=split)
+    # content/ split-mode: primero cross-row, luego entity-level, luego field-level
+    "DuplicatePersonIdValidator",
+    "EntityCompletenessValidator",
     "RequiredFieldsValidator",
-    "DateFormatValidator",
-    # country/ validators se ejecutan al final automaticamente
+    "TypeValidator",
+    "EmailValidator",
+    "ContentCharacterValidator",
+    "LengthValidator",
+    "NationalIdFormatValidator",
+    # content/country/mex/
+    "CURPValidator",
+    "WorkPermitValidator",
 ]
 
 # Validators que producen short-circuit en FATAL
@@ -33,6 +41,7 @@ _SHORT_CIRCUIT_ON_FATAL = {
     "UploadValidator",
     "XMLStructureValidator",
     "CharacterStructureValidator",
+    "DuplicatePersonIdValidator",
 }
 
 
@@ -69,19 +78,12 @@ class ValidationEngine:
         """Ordena validators y filtra por modo."""
         registered = get_registered_validators()
         by_name: dict[str, BaseValidator] = {}
-        country_validators: list[BaseValidator] = []
 
         for cls in registered:
             instance = cls()
-            # Filtrar por modo
             if mode not in instance.modes:
                 continue
-            name = instance.name
-            from .country.base import CountryValidator
-            if isinstance(instance, CountryValidator):
-                country_validators.append(instance)
-            else:
-                by_name[name] = instance
+            by_name[instance.name] = instance
 
         ordered: list[BaseValidator] = []
 
@@ -89,8 +91,8 @@ class ValidationEngine:
             if name in by_name:
                 ordered.append(by_name.pop(name))
 
+        # Cualquier validator no listado en _PHASE_ORDER se ejecuta al final
         for instance in by_name.values():
             ordered.append(instance)
 
-        ordered.extend(country_validators)
         return ordered

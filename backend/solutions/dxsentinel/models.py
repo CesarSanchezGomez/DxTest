@@ -60,6 +60,10 @@ class ValidationIssue(BaseModel):
     field_id: Optional[str] = None
     country_code: Optional[str] = None
     validator: Optional[str] = None
+    row_index: Optional[int] = None
+    column_name: Optional[str] = None
+    person_id: Optional[str] = None
+    value: Optional[str] = None
 
 
 class ValidateResponse(BaseModel):

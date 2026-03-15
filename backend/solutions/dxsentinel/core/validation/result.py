@@ -40,9 +40,13 @@ class ValidationResult:
     field_id: Optional[str] = None
     country_code: Optional[str] = None
     validator: Optional[str] = None
+    row_index: Optional[int] = None
+    column_name: Optional[str] = None
+    person_id: Optional[str] = None
+    value: Optional[str] = None
 
     def to_dict(self) -> dict:
-        return {
+        d = {
             "severity": self.severity.value,
             "code": self.code,
             "message": self.message,
@@ -51,6 +55,15 @@ class ValidationResult:
             "country_code": self.country_code,
             "validator": self.validator,
         }
+        if self.row_index is not None:
+            d["row_index"] = self.row_index
+        if self.column_name:
+            d["column_name"] = self.column_name
+        if self.person_id:
+            d["person_id"] = self.person_id
+        if self.value:
+            d["value"] = self.value
+        return d
 
 
 @dataclass

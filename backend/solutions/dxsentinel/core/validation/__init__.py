@@ -2,9 +2,13 @@
 
 Estructura:
     validation/
-        structure/      → FATAL (xml_structure, character, upload)
-        content/        → ERROR/WARNING (field_rules, field_filter, label, format_group)
-        country/        → ERROR por pais (mx, ...)
+        structure/              → FATAL (xml_structure, character, upload)
+        content/                → ERROR/WARNING (entity_completeness, required_fields,
+                                  type_validator, email, length, character,
+                                  national_id_format, duplicate_person_id,
+                                  field_rules, field_filter, label, format_group)
+            country/
+                mex/            → Mexico: curp, work_permit (RFC/NSS)
 
 Uso:
     from .validation import validate, ValidationEngine, ValidationContext

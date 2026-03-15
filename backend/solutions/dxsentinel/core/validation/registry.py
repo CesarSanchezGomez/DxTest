@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import importlib
 import pkgutil
-from typing import Type
 
 _REGISTRY: list[type] = []
 
@@ -26,7 +25,7 @@ _DISCOVERED = False
 
 
 def _discover_all() -> None:
-    """Importa todos los modulos de structure/, content/ y country/
+    """Importa todos los modulos de structure/, content/ y content/country/
     para activar los decoradores @register_validator."""
     global _DISCOVERED
     if _DISCOVERED:
@@ -35,7 +34,7 @@ def _discover_all() -> None:
 
     _discover_package("structure")
     _discover_package("content")
-    _discover_package("country")
+    _discover_package("content.country.mex")
 
 
 def _discover_package(subpackage: str) -> None:

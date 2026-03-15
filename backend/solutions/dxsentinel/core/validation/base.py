@@ -57,6 +57,10 @@ class BaseValidator(ABC):
         element_id: str | None = None,
         field_id: str | None = None,
         country_code: str | None = None,
+        row_index: int | None = None,
+        column_name: str | None = None,
+        person_id: str | None = None,
+        value: str | None = None,
         **msg_kwargs: object,
     ) -> ValidationResult:
         """Crea un ValidationResult usando el catalogo de mensajes."""
@@ -74,4 +78,8 @@ class BaseValidator(ABC):
             field_id=field_id,
             country_code=country_code,
             validator=self.name,
+            row_index=row_index,
+            column_name=column_name,
+            person_id=person_id,
+            value=value[:50] if value else value,
         )

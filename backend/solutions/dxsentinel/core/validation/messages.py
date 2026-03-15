@@ -20,7 +20,7 @@ class Messages:
         "STRUCT_005": "Elemento duplicado '{key}' aparece {count} veces",
         "STRUCT_006": "Business key '{field_id}' faltante en entidad '{element_id}'",
 
-        # character.py
+        # character.py (structure)
         "CHAR_001": "Field ID contiene caracteres invalidos: '{field_id}'",
         "CHAR_002": "Full field ID contiene caracteres invalidos: '{full_id}'",
         "CHAR_003": "Caracteres de control en field ID: '{field_id}'",
@@ -62,18 +62,81 @@ class Messages:
         "FMT_003": "Format group '{group_id}' formato '{fmt_id}' regex invalido: {error}",
         "FMT_004": "Format group '{group_id}' formato '{fmt_id}' sin display_format",
 
+        # entity_completeness.py
+        "INCOMPLETE_ENTITY": "Con datos: {filled}. Faltantes: {missing}",
+
         # required_fields.py
-        "REQ_001": "Campo required vacio en fila {row}: {field_id}",
+        "REQUIRED_FIELD_EMPTY": "Campo obligatorio vacio",
 
-        # date_format.py
-        "DATE_001": "Formato de fecha no reconocido en fila {row}: '{value}' ({field_id})",
+        # duplicate_person_id.py
+        "DUPLICATE_PERSON_ID": "ID duplicado '{person_id}'. Aparece en las filas: {rows}",
 
-        # ── country/ ─────────────────────────────────────────────────────
+        # email.py
+        "INVALID_EMAIL_FORMAT": "Formato invalido. Esperado: usuario@dominio.com",
+
+        # type_validator.py
+        "INVALID_DATE_FORMAT": "Formato invalido. Esperado: {expected}",
+        "INVALID_INTEGER": "Debe ser numero entero (sin decimales)",
+        "INVALID_DECIMAL": "Debe ser numero (puede tener decimales con punto)",
+        "INVALID_BOOLEAN": "Valores aceptados: Yes, No, True, False, 1, 0",
+
+        # length.py
+        "MAX_LENGTH_EXCEEDED": "Longitud: {actual_length} caracteres. Maximo: {max_length}",
+
+        # character.py (content)
+        "INVALID_CHARACTERS": "Caracteres invalidos {chars} en: '{value}'. Problema de encoding",
+        "SUSPICIOUS_ENCODING": "Caracteres sospechosos {chars} en: '{value}'. Posible problema de encoding",
+
+        # national_id_format.py
+        "INVALID_NATIONAL_ID_FORMAT": "ID nacional invalido para {countries}. Formato esperado: {formats}",
+
+        # no_data_rows
+        "NO_DATA_ROWS": "CSV sin datos. Headers y labels correctos pero no hay filas de datos",
+
+        # ── content/country/mex/ ──────────────────────────────────────────
         # curp.py
-        "CURP_001": "CURP invalida en fila {row}: '{value}' - {reason}",
+        "CURP_EMPTY_FIELD": "Campo '{field_name}' esta vacio",
+        "CURP_NOT_UPPERCASE": "La CURP no esta en mayusculas",
+        "CURP_INVALID_LENGTH": "La CURP debe tener {expected} caracteres. Tiene: {actual}",
+        "CURP_INVALID_DATE_FORMAT": "Fecha de nacimiento no es valida (dd/mm/aaaa)",
+        "CURP_NAME_MISMATCH": "Las iniciales de nombre y apellidos no coinciden con la CURP",
+        "CURP_DATE_MISMATCH": "La fecha de nacimiento no coincide con la CURP",
+        "CURP_GENDER_INVALID_VALUE": (
+            "El valor del genero no pertenece a ningún valor de la picklist. "
+            "Formato de idioma: {language_label}. Valores aceptados: {picklist}"
+        ),
+        "CURP_GENDER_MISMATCH": (
+            "Genero no coincide con CURP. "
+            "Formato de idioma: {language_label}. Valores esperados del genero: {picklist}"
+        ),
+        "CURP_STATE_NOT_IN_PICKLIST": (
+            "Inconsistencia en estado de nacimiento: el valor registrado '{region}' "
+            "no corresponde a ninguna opcion de la picklist oficial 'state_mex'"
+        ),
+        "CURP_STATE_FOREIGN_NOT_NE": (
+            "Inconsistencia detectada: el pais de nacimiento ({country_of_birth}) "
+            "indica origen extranjero, pero la CURP contiene el codigo '{state_in_curp}' en lugar de 'NE'"
+        ),
+        "CURP_STATE_MEXICO_IS_NE": (
+            "El empleado nacio en Mexico (country-of-birth = MEX) "
+            "pero la CURP indica nacido en el extranjero (NE). "
+            "Debe corresponder a un estado de la Republica Mexicana"
+        ),
+        "CURP_STATE_MISMATCH": "El lugar de nacimiento no coincide con la CURP",
 
-        # rfc.py
-        "RFC_001": "RFC invalido en fila {row}: '{value}' - {reason}",
+        # work_permit.py (RFC/NSS)
+        "WORK_PERMIT_INCOMPLETE": "workPermitInfo incompleto: falta tipo o numero de documento",
+        "WORK_PERMIT_COUNT_MISMATCH": (
+            "La cantidad de tipos ({types_count}) y numeros ({numbers_count}) "
+            "de documento no coincide"
+        ),
+        "WORK_PERMIT_RFC_INVALID": (
+            "RFC en posicion {position} no tiene formato valido. "
+            "Esperado: persona fisica AAAA######AAA (13 chars) o "
+            "persona moral AAA######AAA (12 chars)"
+        ),
+        "WORK_PERMIT_NSS_INVALID": "NSS en posicion {position} no tiene formato valido. Esperado: 11 digitos numericos",
+        "WORK_PERMIT_UNKNOWN_TYPE": "Tipo de documento desconocido en posicion {position}: '{value}'",
 
         # ── engine ───────────────────────────────────────────────────────
         "ENGINE_001": "Validator '{validator}' fallo: {error}",
