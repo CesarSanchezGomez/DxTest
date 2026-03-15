@@ -100,7 +100,7 @@ SAP_ENTITY_CONFIGS: dict[str, dict] = {
         "is_master": True,
         "references": None,
         "description": "Master entity - personIdExternal is primary key",
-        "inject": ["user-id"],
+        "inject": [],
         "field_types": {
             "DATE": ["date-of-birth", "date-of-death"],
             "LONG": ["attachment-id"],
