@@ -234,10 +234,26 @@ async def split_validate(request: ValidateRequest, user=Depends(get_current_user
         import json
 
         # ── 1. Parsear el CSV en headers + rows ─────────────────────────
+        # Golden Record CSV: fila 1 = headers, fila 2 = labels, fila 3+ = datos
         csv_text = csv_path.read_text(encoding="utf-8-sig")
-        reader = csv.DictReader(io.StringIO(csv_text))
+        normalized = csv_text.replace("\r\n", "\n").replace("\r", "\n")
+        lines = normalized.strip().split("\n")
+
+        if len(lines) < 3:
+            raise HTTPException(status_code=400, detail="CSV debe tener headers, labels y al menos una fila de datos")
+
+        # Reconstruir CSV sin la fila de labels (fila 2)
+        headers_line = lines[0]
+        data_lines = lines[2:]  # Skip labels row
+        csv_content = "\n".join([headers_line] + data_lines)
+
+        reader = csv.DictReader(io.StringIO(csv_content))
         csv_headers = reader.fieldnames or []
-        csv_rows = list(reader)
+        # Filtrar filas completamente vacias
+        csv_rows = [
+            row for row in reader
+            if any(v and str(v).strip() for v in row.values())
+        ]
 
         if not csv_headers:
             raise HTTPException(status_code=400, detail="CSV sin columnas")
